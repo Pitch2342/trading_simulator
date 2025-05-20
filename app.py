@@ -37,18 +37,17 @@ def main():
         st.title("Trading Decision Simulator")
     with header_col2:
         st.markdown("### Progress Control")
-        if not st.session_state.waiting_for_trade:
-            if st.button("Start Auto Progress"):
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Start"):
                 st.session_state.auto_progress = True
-                st.experimental_rerun()
-            if st.button("Stop Auto Progress"):
-                st.session_state.auto_progress = False
-                st.experimental_rerun()
-        if st.session_state.trade_made:
-            if st.button("Continue"):
                 st.session_state.waiting_for_trade = False
                 st.session_state.trade_made = False
                 st.session_state.current_day_index += 1
+                st.experimental_rerun()
+        with col2:
+            if st.button("Stop"):
+                st.session_state.auto_progress = False
                 st.experimental_rerun()
     
     # Load predefined AAPL ticker data

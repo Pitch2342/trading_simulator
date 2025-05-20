@@ -4,7 +4,7 @@ from utils.data_handler import mask_future_data
 
 def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> None:
     """
-    Render progressive price chart with masked future data.
+    Render progressive price chart with masked future data and expanding window.
     
     Args:
         df: DataFrame with price data
@@ -26,36 +26,69 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
         line=dict(color='blue')
     ))
     
-    # Add breakpoint markers
-    breakpoint_dates = df.loc[breakpoints, 'Date']
-    breakpoint_prices = df.loc[breakpoints, 'Price']
+    # Only show breakpoints that have already occurred
+    past_breakpoints = [bp for bp in breakpoints if bp <= current_day_index]
+    if past_breakpoints:
+        breakpoint_dates = df.loc[past_breakpoints, 'Date']
+        breakpoint_prices = df.loc[past_breakpoints, 'Price']
+        
+        fig.add_trace(go.Scatter(
+            x=breakpoint_dates,
+            y=breakpoint_prices,
+            mode='markers',
+            name='Decision Points',
+            marker=dict(
+                color='red',
+                size=10,
+                symbol='diamond'
+            )
+        ))
     
-    fig.add_trace(go.Scatter(
-        x=breakpoint_dates,
-        y=breakpoint_prices,
-        mode='markers',
-        name='Breakpoints',
-        marker=dict(
-            color='red',
-            size=10,
-            symbol='diamond'
-        )
-    ))
-    
-    # Update layout
+    # Update layout with improved styling
     fig.update_layout(
         title='Price Movement',
         xaxis_title='Date',
         yaxis_title='Price',
         showlegend=True,
-        height=500
+        height=500,
+        # Add a subtle grid
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',  # lightgray with 20% opacity
+            gridwidth=1
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',  # lightgray with 20% opacity
+            gridwidth=1
+        )
     )
     
-    # Add vertical line for current day
-    fig.add_vline(
-        x=df.iloc[current_day_index]['Date'],
-        line_dash="dash",
-        line_color="gray"
+    # Add vertical line for current day with improved styling
+    current_date = df.iloc[current_day_index]['Date']
+    fig.add_shape(
+        type="line",
+        x0=current_date,
+        x1=current_date,
+        y0=0,
+        y1=1,
+        yref="paper",
+        line=dict(
+            color="gray",
+            width=2,
+            dash="dash"
+        )
+    )
+    
+    # Add annotation for current day
+    fig.add_annotation(
+        x=current_date,
+        y=1,
+        yref="paper",
+        text="Current Day",
+        showarrow=False,
+        yshift=10,
+        xshift=10
     )
     
     # Display chart

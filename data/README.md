@@ -4,9 +4,7 @@ This directory contains CSV files with predefined ticker data for the Trading De
 
 ## Available Tickers
 The following tickers are available for trading:
-- `sample_ticker.csv`: Sample ticker for testing
-- `AAPL.csv`: Apple Inc. stock data
-- `GOOGL.csv`: Google (Alphabet Inc.) stock data
+- `SAMPLE_SWINGS.csv`: Sample ticker for testing
 
 ## File Format
 Each CSV file follows this format:

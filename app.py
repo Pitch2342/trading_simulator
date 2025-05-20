@@ -5,6 +5,7 @@ from components.trading_interface import render_trading_interface
 from components.performance_metrics import render_performance_metrics
 from utils.pnl_calculator import PnLCalculator
 import os
+import time
 
 # Page configuration
 st.set_page_config(
@@ -22,6 +23,12 @@ if 'pnl_calculator' not in st.session_state:
     st.session_state.pnl_calculator = PnLCalculator()
 if 'trading_history' not in st.session_state:
     st.session_state.trading_history = []
+if 'auto_progress' not in st.session_state:
+    st.session_state.auto_progress = False
+if 'waiting_for_trade' not in st.session_state:
+    st.session_state.waiting_for_trade = False
+if 'trade_made' not in st.session_state:
+    st.session_state.trade_made = False
 
 def main():
     st.title("Trading Decision Simulator")
@@ -57,22 +64,45 @@ def main():
     with col2:
         # Trading interface
         if st.session_state.current_day_index in breakpoints:
+            st.session_state.waiting_for_trade = True
             render_trading_interface(
                 df.iloc[st.session_state.current_day_index]['Price'],
                 st.session_state.portfolio
             )
+            
+            # Show Continue button after trade is made
+            if st.session_state.trade_made:
+                if st.button("Continue"):
+                    st.session_state.waiting_for_trade = False
+                    st.session_state.trade_made = False
+                    st.session_state.current_day_index += 1
+                    st.experimental_rerun()
+        else:
+            st.session_state.waiting_for_trade = False
         
-        # Progress control
-        if st.button("Next Day"):
-            if st.session_state.current_day_index < len(df) - 1:
-                st.session_state.current_day_index += 1
+        # Progress control - only show if not at a breakpoint
+        if not st.session_state.waiting_for_trade:
+            if st.button("Start Auto Progress"):
+                st.session_state.auto_progress = True
                 st.experimental_rerun()
-            else:
-                st.warning("You've reached the end of the simulation!")
+            
+            if st.button("Stop Auto Progress"):
+                st.session_state.auto_progress = False
+                st.experimental_rerun()
     
     # Performance metrics
     if st.session_state.current_day_index > 0:
         render_performance_metrics(st.session_state.trading_history)
+    
+    # Auto progress logic
+    if st.session_state.auto_progress and not st.session_state.waiting_for_trade:
+        if st.session_state.current_day_index < len(df) - 1:
+            time.sleep(1)  # Sleep for 1 second
+            st.session_state.current_day_index += 1
+            st.experimental_rerun()
+        else:
+            st.session_state.auto_progress = False
+            st.warning("You've reached the end of the simulation!")
 
 if __name__ == "__main__":
     main()

@@ -48,6 +48,7 @@ def render_trading_interface(current_price: float, portfolio: Dict) -> None:
                 'price': current_price,
                 'quantity': 0
             })
+            st.session_state.trade_made = True
         else:
             try:
                 st.session_state.pnl_calculator.execute_trade(
@@ -64,6 +65,7 @@ def render_trading_interface(current_price: float, portfolio: Dict) -> None:
                     'price': current_price,
                     'quantity': quantity
                 })
+                st.session_state.trade_made = True
             except ValueError as e:
                 st.error(str(e))
         

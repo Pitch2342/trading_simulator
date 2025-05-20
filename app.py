@@ -31,7 +31,25 @@ if 'trade_made' not in st.session_state:
     st.session_state.trade_made = False
 
 def main():
-    st.title("Trading Decision Simulator")
+    # Create header with title and progress controls
+    header_col1, header_col2 = st.columns([3, 1])
+    with header_col1:
+        st.title("Trading Decision Simulator")
+    with header_col2:
+        st.markdown("### Progress Control")
+        if not st.session_state.waiting_for_trade:
+            if st.button("Start Auto Progress"):
+                st.session_state.auto_progress = True
+                st.experimental_rerun()
+            if st.button("Stop Auto Progress"):
+                st.session_state.auto_progress = False
+                st.experimental_rerun()
+        if st.session_state.trade_made:
+            if st.button("Continue"):
+                st.session_state.waiting_for_trade = False
+                st.session_state.trade_made = False
+                st.session_state.current_day_index += 1
+                st.experimental_rerun()
     
     # Load predefined AAPL ticker data
     ticker_path = os.path.join('data', 'AAPL.csv')
@@ -43,52 +61,39 @@ def main():
         st.session_state.current_day_index = len(df) - 1
     
     # Main simulation area
-    col1, col2 = st.columns([2, 1])
+    render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+    
+    # Create two columns for trading decision and current position
+    col1, col2 = st.columns(2)
     
     with col1:
-        # Render progressive chart
-        render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
-        
-        # Display current position and PnL
-        st.subheader("Current Position")
-        current_price = df.iloc[st.session_state.current_day_index]['Price']
-        st.session_state.pnl_calculator.update_portfolio_value(current_price)
-        portfolio_value = st.session_state.pnl_calculator.get_portfolio_value(current_price)
-        
-        st.write(f"Cash: ${st.session_state.portfolio['cash']:.2f}")
-        st.write(f"Positions: {st.session_state.portfolio['positions']}")
-        st.write(f"Current Price: ${current_price:.2f}")
-        st.write(f"Total Portfolio Value: ${portfolio_value:.2f}")
-        st.write(f"Current PnL: ${st.session_state.pnl_calculator.get_current_pnl():.2f}")
+        # Trading decision tile with container
+        with st.container(border=True):
+            st.markdown("### Trading Decision")
+            if st.session_state.current_day_index in breakpoints:
+                st.session_state.waiting_for_trade = True
+                render_trading_interface(
+                    df.iloc[st.session_state.current_day_index]['Price'],
+                    st.session_state.portfolio
+                )
+            else:
+                st.session_state.waiting_for_trade = False
+                st.info("No trading decision needed at this point")
     
     with col2:
-        # Trading interface
-        if st.session_state.current_day_index in breakpoints:
-            st.session_state.waiting_for_trade = True
-            render_trading_interface(
-                df.iloc[st.session_state.current_day_index]['Price'],
-                st.session_state.portfolio
-            )
+        # Current position tile with container
+        with st.container(border=True):
+            st.markdown("### Current Position")
+            current_price = df.iloc[st.session_state.current_day_index]['Price']
+            st.session_state.pnl_calculator.update_portfolio_value(current_price)
+            portfolio_value = st.session_state.pnl_calculator.get_portfolio_value(current_price)
             
-            # Show Continue button after trade is made
-            if st.session_state.trade_made:
-                if st.button("Continue"):
-                    st.session_state.waiting_for_trade = False
-                    st.session_state.trade_made = False
-                    st.session_state.current_day_index += 1
-                    st.experimental_rerun()
-        else:
-            st.session_state.waiting_for_trade = False
-        
-        # Progress control - only show if not at a breakpoint
-        if not st.session_state.waiting_for_trade:
-            if st.button("Start Auto Progress"):
-                st.session_state.auto_progress = True
-                st.experimental_rerun()
-            
-            if st.button("Stop Auto Progress"):
-                st.session_state.auto_progress = False
-                st.experimental_rerun()
+            # Display position information in a more organized way
+            st.metric("Cash Balance", f"${st.session_state.portfolio['cash']:.2f}")
+            st.metric("Current Positions", f"{st.session_state.portfolio['positions']}")
+            st.metric("Current Price", f"${current_price:.2f}")
+            st.metric("Total Portfolio Value", f"${portfolio_value:.2f}")
+            st.metric("Current PnL", f"${st.session_state.pnl_calculator.get_current_pnl():.2f}")
     
     # Performance metrics
     if st.session_state.current_day_index > 0:

@@ -29,12 +29,30 @@ if 'waiting_for_trade' not in st.session_state:
     st.session_state.waiting_for_trade = False
 if 'trade_made' not in st.session_state:
     st.session_state.trade_made = False
+if 'selected_ticker' not in st.session_state:
+    st.session_state.selected_ticker = 'SAMPLE_SWINGS.csv'
 
 def main():
     # Create header with title and progress controls
     header_col1, header_col2 = st.columns([3, 1])
     with header_col1:
         st.title("Trading Decision Simulator")
+        # Add ticker selection dropdown
+        available_tickers = [f.replace(".csv", "") for f in os.listdir('data') if f.endswith('.csv')]
+        selected_ticker = st.selectbox(
+            "Select Ticker",
+            options=available_tickers,
+            index=available_tickers.index(st.session_state.selected_ticker) if st.session_state.selected_ticker in available_tickers else 0
+        )
+        if selected_ticker != st.session_state.selected_ticker:
+            st.session_state.selected_ticker = selected_ticker
+            st.session_state.current_day_index = 0
+            st.session_state.portfolio = {'cash': 10000, 'positions': 0}
+            st.session_state.trading_history = []
+            st.session_state.auto_progress = False
+            st.session_state.waiting_for_trade = False
+            st.session_state.trade_made = False
+            st.experimental_rerun()
     with header_col2:
         st.markdown("### Progress Control")
         col1, col2 = st.columns(2)
@@ -50,8 +68,8 @@ def main():
                 st.session_state.auto_progress = False
                 st.experimental_rerun()
     
-    # Load predefined AAPL ticker data
-    ticker_path = os.path.join('data', 'AAPL.csv')
+    # Load selected ticker data
+    ticker_path = os.path.join('data', f"{st.session_state.selected_ticker}.csv")
     df = load_data(ticker_path)
     breakpoints = extract_breakpoints(df)
     

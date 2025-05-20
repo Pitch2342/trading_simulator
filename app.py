@@ -61,15 +61,15 @@ def main():
         st.session_state.current_day_index = len(df) - 1
     
     # Main simulation area
-    render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
-    
-    # Create two columns for trading decision and current position
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for tiles
     
     with col1:
+        render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+    
+    with col2:
         # Trading decision tile with container
         with st.container(border=True):
-            st.markdown("### Trading Decision")
+            st.markdown("#### Trading Decision")
             if st.session_state.current_day_index in breakpoints:
                 st.session_state.waiting_for_trade = True
                 render_trading_interface(
@@ -78,22 +78,29 @@ def main():
                 )
             else:
                 st.session_state.waiting_for_trade = False
-                st.info("No trading decision needed at this point")
-    
-    with col2:
+                st.info("No trading decision needed", icon="ℹ️")
+        
         # Current position tile with container
         with st.container(border=True):
-            st.markdown("### Current Position")
+            st.markdown("#### Current Position")
             current_price = df.iloc[st.session_state.current_day_index]['Price']
             st.session_state.pnl_calculator.update_portfolio_value(current_price)
             portfolio_value = st.session_state.pnl_calculator.get_portfolio_value(current_price)
             
-            # Display position information in a more organized way
-            st.metric("Cash Balance", f"${st.session_state.portfolio['cash']:.2f}")
-            st.metric("Current Positions", f"{st.session_state.portfolio['positions']}")
-            st.metric("Current Price", f"${current_price:.2f}")
-            st.metric("Total Portfolio Value", f"${portfolio_value:.2f}")
-            st.metric("Current PnL", f"${st.session_state.pnl_calculator.get_current_pnl():.2f}")
+            # Display position information in a 2x2 tile layout
+            # First row
+            row1_col1, row1_col2 = st.columns(2)
+            with row1_col1:
+                st.metric("Cash", f"${st.session_state.portfolio['cash']:.2f}")
+            with row1_col2:
+                st.metric("Portfolio", f"${portfolio_value:.2f}")
+
+            # Second row
+            row2_col1, row2_col2 = st.columns(2)
+            with row2_col1:
+                st.metric("Positions", f"{st.session_state.portfolio['positions']}")
+            with row2_col2:
+                st.metric("PnL", f"${st.session_state.pnl_calculator.get_current_pnl():.2f}")
     
     # Performance metrics
     if st.session_state.current_day_index > 0:
@@ -108,6 +115,22 @@ def main():
         else:
             st.session_state.auto_progress = False
             st.warning("You've reached the end of the simulation!")
+
+    # Inject custom CSS
+    st.markdown(
+        '''
+        <style>
+        /* Make metric values auto-size and prevent truncation */
+        div[data-testid="stMetricValue"] {
+            font-size: clamp(1.2rem, 4vw, 2.5rem);
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: initial;
+        }
+        </style>
+        ''' ,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()

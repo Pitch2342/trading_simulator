@@ -2,10 +2,10 @@ import streamlit as st
 from utils.data_handler import load_data, extract_breakpoints
 from components.price_chart import render_progressive_chart
 from components.trading_interface import render_trading_interface
-from components.performance_metrics import render_performance_metrics
 from utils.pnl_calculator import PnLCalculator
 import os
 import time
+import plotly.graph_objects as go
 
 # Page configuration
 st.set_page_config(
@@ -118,11 +118,52 @@ def main():
                 st.metric("Positions", f"{st.session_state.portfolio['positions']}")
             with row2_col2:
                 st.metric("PnL", f"${st.session_state.pnl_calculator.get_current_pnl():.2f}")
+
+            # Third row - Performance metrics
+            if st.session_state.current_day_index > 0:
+                metrics = st.session_state.pnl_calculator.get_performance_metrics()
+                row3_col1, row3_col2 = st.columns(2)
+                with row3_col1:
+                    st.metric(
+                        "Total Return",
+                        f"{metrics['total_return']:.2f}%",
+                        delta=f"{metrics['total_return']:.2f}%"
+                    )
+                with row3_col2:
+                    st.metric(
+                        "Max Drawdown",
+                        f"{metrics['max_drawdown']:.2f}%"
+                    )
     
     # Performance metrics
     if st.session_state.current_day_index > 0:
-        render_performance_metrics(st.session_state.trading_history)
-    
+        # Create portfolio value chart
+        if len(st.session_state.trading_history) > 0:
+            portfolio_values = st.session_state.pnl_calculator.portfolio_values
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                y=portfolio_values,
+                mode='lines',
+                name='Portfolio Value',
+                line=dict(color='green')
+            ))
+            
+            fig.update_layout(
+                title='Portfolio Value Over Time',
+                xaxis_title='Trading Day',
+                yaxis_title='Value ($)',
+                showlegend=True,
+                height=300
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Display trading history
+            st.subheader("Trading History")
+            for i, trade in enumerate(st.session_state.trading_history, 1):
+                st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ ${trade['price']:.2f}")
+
     # Auto progress logic
     if st.session_state.auto_progress and not st.session_state.waiting_for_trade:
         if st.session_state.current_day_index < len(df) - 1:

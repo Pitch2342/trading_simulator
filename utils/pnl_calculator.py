@@ -9,17 +9,63 @@ class PnLCalculator:
         self.trades: List[Dict] = []
         self.portfolio_values: List[float] = [self.initial_cash]
         self.current_price: float = 0.0
+        
+        # Initialize daily metrics DataFrame
+        self.daily_metrics = pd.DataFrame(columns=[
+            'date',
+            'cash',
+            'portfolio_value',
+            'positions',
+            'pnl',
+            'return_pct',
+            'drawdown_pct'
+        ])
     
-    def update_portfolio_value(self, current_price: float) -> None:
+    def update_daily_metrics(self, date: pd.Timestamp) -> None:
         """
-        Update portfolio value with current price.
+        Update daily metrics DataFrame with current portfolio state.
+        
+        Args:
+            date: Current date for the metrics
+        """
+        portfolio_value = self.get_portfolio_value(self.current_price)
+        pnl = self.get_current_pnl()
+        return_pct = (portfolio_value / self.initial_cash - 1) * 100
+        
+        # Calculate drawdown
+        if len(self.portfolio_values) > 0:
+            peak = max(self.portfolio_values)
+            drawdown_pct = ((peak - portfolio_value) / peak * 100) if peak > 0 else 0
+        else:
+            drawdown_pct = 0
+            
+        new_row = pd.DataFrame([{
+            'date': date,
+            'cash': self.cash,
+            'portfolio_value': portfolio_value,
+            'positions': self.positions,
+            'pnl': pnl,
+            'return_pct': return_pct,
+            'drawdown_pct': drawdown_pct
+        }])
+        
+        self.daily_metrics = pd.concat([self.daily_metrics, new_row], ignore_index=True)
+    
+    def update_portfolio_value(self, current_price: float, date: pd.Timestamp = None) -> None:
+        """
+        Update portfolio value with current price and daily metrics.
         
         Args:
             current_price: Current price per share
+            date: Current date for metrics (defaults to current timestamp)
         """
         self.current_price = current_price
         current_value = self.get_portfolio_value(current_price)
         self.portfolio_values.append(current_value)
+        
+        if date is None:
+            date = pd.Timestamp.now()
+        self.update_daily_metrics(date)
     
     def execute_trade(self, action: str, quantity: int, price: float) -> None:
         """

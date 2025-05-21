@@ -31,6 +31,10 @@ if 'portfolios' not in st.session_state:
     st.session_state.portfolios = {
         1: {'cash': 10000, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
     }
+if 'player_names' not in st.session_state:
+    st.session_state.player_names = {
+        1: "Player 1"
+    }
 if 'auto_progress' not in st.session_state:
     st.session_state.auto_progress = False
 if 'waiting_for_trade' not in st.session_state:
@@ -83,12 +87,16 @@ def main():
                 st.session_state.num_players = num_players
                 # Initialize new players or remove excess players
                 new_portfolios = {}
+                new_player_names = {}
                 for i in range(1, num_players + 1):
                     if i in st.session_state.portfolios:
                         new_portfolios[i] = st.session_state.portfolios[i]
+                        new_player_names[i] = st.session_state.player_names[i]
                     else:
                         new_portfolios[i] = {'cash': 10000, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
+                        new_player_names[i] = f"Player {i}"
                 st.session_state.portfolios = new_portfolios
+                st.session_state.player_names = new_player_names
                 st.experimental_rerun()
     
     # Load selected ticker data
@@ -110,7 +118,17 @@ def main():
         # Create a container for each player
         for player_num in range(1, st.session_state.num_players + 1):
             with st.container(border=True):
-                st.markdown(f"#### Player {player_num}")
+                # Add player name input
+                player_name = st.text_input(
+                    "Player Name",
+                    value=st.session_state.player_names[player_num],
+                    key=f"player_name_{player_num}"
+                )
+                if player_name != st.session_state.player_names[player_num]:
+                    st.session_state.player_names[player_num] = player_name
+                    st.experimental_rerun()
+                
+                st.markdown(f"#### {st.session_state.player_names[player_num]}")
                 # Trading decision tile
                 if st.session_state.current_day_index in breakpoints:
                     st.session_state.waiting_for_trade = True
@@ -125,7 +143,8 @@ def main():
                 
                 # Current position tile
                 current_price = df.iloc[st.session_state.current_day_index]['Price']
-                st.session_state.portfolios[player_num]['pnl_calculator'].update_portfolio_value(current_price)
+                current_date = df.iloc[st.session_state.current_day_index]['Date']
+                st.session_state.portfolios[player_num]['pnl_calculator'].update_portfolio_value(current_price, current_date)
                 portfolio_value = st.session_state.portfolios[player_num]['pnl_calculator'].get_portfolio_value(current_price)
                 
                 # Display position information in a 2x2 tile layout
@@ -169,7 +188,7 @@ def main():
                         x=daily_metrics['date'],
                         y=daily_metrics['portfolio_value'],
                         mode='lines',
-                        name=f'Player {player_num}',
+                        name=st.session_state.player_names[player_num],
                         line=dict(color=PLAYER_COLORS[player_num])
                     ))
         
@@ -186,7 +205,7 @@ def main():
         # Display trading history for all players
         st.subheader("Trading History")
         for player_num in range(1, st.session_state.num_players + 1):
-            st.markdown(f"**Player {player_num}**")
+            st.markdown(f"**{st.session_state.player_names[player_num]}**")
             for i, trade in enumerate(st.session_state.portfolios[player_num]['trading_history'], 1):
                 st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ ${trade['price']:.2f}")
 

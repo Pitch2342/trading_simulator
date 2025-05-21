@@ -109,25 +109,15 @@ def main():
         st.session_state.current_day_index = len(df) - 1
     
     # Main simulation area
-    col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for tiles
+    col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
     
     with col1:
         render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
     
     with col2:
-        # Create a container for each player
+        # Create a container for each player's trading decisions
         for player_num in range(1, st.session_state.num_players + 1):
             with st.container(border=True):
-                # Add player name input
-                player_name = st.text_input(
-                    "Player Name",
-                    value=st.session_state.player_names[player_num],
-                    key=f"player_name_{player_num}"
-                )
-                if player_name != st.session_state.player_names[player_num]:
-                    st.session_state.player_names[player_num] = player_name
-                    st.experimental_rerun()
-                
                 st.markdown(f"#### {st.session_state.player_names[player_num]}")
                 # Trading decision tile
                 if st.session_state.current_day_index in breakpoints:
@@ -140,6 +130,25 @@ def main():
                 else:
                     st.session_state.waiting_for_trade = False
                     st.info("No trading decision needed", icon="ℹ️")
+
+    # Stats tiles below the price chart
+    st.markdown("### Portfolio Stats")
+    stats_cols = st.columns(st.session_state.num_players)
+    
+    for player_num in range(1, st.session_state.num_players + 1):
+        with stats_cols[player_num - 1]:
+            with st.container(border=True):
+                # Add player name input
+                player_name = st.text_input(
+                    "Player Name",
+                    value=st.session_state.player_names[player_num],
+                    key=f"player_name_{player_num}"
+                )
+                if player_name != st.session_state.player_names[player_num]:
+                    st.session_state.player_names[player_num] = player_name
+                    st.experimental_rerun()
+                
+                st.markdown(f"#### {st.session_state.player_names[player_num]}")
                 
                 # Current position tile
                 current_price = df.iloc[st.session_state.current_day_index]['Price']
@@ -174,7 +183,7 @@ def main():
                             "Max Drawdown",
                             f"{metrics['max_drawdown']:.2f}%"
                         )
-    
+
     # Performance metrics
     if st.session_state.current_day_index > 0:
         # Create portfolio value chart

@@ -122,14 +122,12 @@ def main():
                 # Trading decision tile
                 if st.session_state.current_day_index in breakpoints:
                     st.session_state.waiting_for_trade = True
-                    render_trading_interface(
-                        df.iloc[st.session_state.current_day_index]['Price'],
-                        st.session_state.portfolios[player_num],
-                        player_num
-                    )
-                else:
-                    st.session_state.waiting_for_trade = False
-                    st.info("No trading decision needed", icon="ℹ️")
+                render_trading_interface(
+                    df.iloc[st.session_state.current_day_index]['Price'],
+                    st.session_state.portfolios[player_num],
+                    player_num,
+                    is_breakpoint=st.session_state.current_day_index in breakpoints
+                )
 
     # Stats tiles below the price chart
     st.markdown("### Portfolio Stats")

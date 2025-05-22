@@ -9,7 +9,7 @@ PLAYER_COLORS = {
     4: '#d62728'   # Red
 }
 
-def render_trading_interface(current_price: float, portfolio: Dict, player_num: int) -> None:
+def render_trading_interface(current_price: float, portfolio: Dict, player_num: int, is_breakpoint: bool = False) -> None:
     """
     Render trading interface for user decisions.
     
@@ -17,6 +17,7 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         current_price: Current price per share
         portfolio: Current portfolio state
         player_num: Player number (1-4)
+        is_breakpoint: Whether the current day is a breakpoint
     """
     # Add player color styling
     st.markdown(
@@ -47,29 +48,28 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         qty_col, value_col = st.columns(2)
         
         # Quantity input for buy/sell
-        if action != "Hold":
-            with qty_col:
-                max_quantity = int(portfolio['cash'] / current_price) if action == "Buy" else portfolio['positions']
-                quantity = st.number_input(
-                    "Qty",
-                    min_value=0,
-                    max_value=max_quantity,
-                    value=0,
-                    step=1,
-                    key=f"quantity_input_{player_num}"
-                )
-            
-            with value_col:
-                # Calculate and display trade impact
-                trade_value = quantity * current_price
-                st.metric(
-                    "Value",
-                    f"${trade_value:.2f}",
-                    f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
-                )
+        with qty_col:
+            max_quantity = int(portfolio['cash'] / current_price) if action == "Buy" else portfolio['positions']
+            quantity = st.number_input(
+                "Qty",
+                min_value=0,
+                max_value=max_quantity,
+                value=0,
+                step=1,
+                key=f"quantity_input_{player_num}"
+            )
+        
+        with value_col:
+            # Calculate and display trade impact
+            trade_value = quantity * current_price
+            st.metric(
+                "Value",
+                f"${trade_value:.2f}",
+                f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
+            )
         
         # Execute trade button
-        if st.button("Execute Trade", key=f"execute_trade_{player_num}"):
+        if st.button("Execute Trade", key=f"execute_trade_{player_num}", disabled=not is_breakpoint):
             if action == "Hold":
                 st.success("Holding position")
                 portfolio['trading_history'].append({

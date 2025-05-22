@@ -11,6 +11,17 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
         current_day_index: Current day index
         breakpoints: List of breakpoint indices
     """
+    # Display current price in a prominent ticker
+    current_price = df.iloc[current_day_index]['Price']
+    st.markdown(
+        f"""
+        <div style='text-align: center; padding: 10px; margin-bottom: 5px;'>
+            <h3 style='margin: 0; color: white; font-weight: 500;'>${current_price:.2f}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     # Create masked data for future prices
     masked_df = mask_future_data(df, current_day_index)
     

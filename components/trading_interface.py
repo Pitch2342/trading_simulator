@@ -34,7 +34,6 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
     
     with st.container():
         st.markdown(f'<div class="player-{player_num}">', unsafe_allow_html=True)
-        st.write(f"Price: ${current_price:.2f}")
         
         # Trading action selection
         action = st.radio(

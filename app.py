@@ -115,72 +115,82 @@ def main():
         render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
     
     with col2:
-        # Create a container for each player's trading decisions
-        for player_num in range(1, st.session_state.num_players + 1):
-            with st.container(border=True):
-                st.markdown(f"#### {st.session_state.player_names[player_num]}")
-                # Trading decision tile
-                if st.session_state.current_day_index in breakpoints:
-                    st.session_state.waiting_for_trade = True
-                render_trading_interface(
-                    df.iloc[st.session_state.current_day_index]['Price'],
-                    st.session_state.portfolios[player_num],
-                    player_num,
-                    is_breakpoint=st.session_state.current_day_index in breakpoints
-                )
+        # Create a container for trading decisions
+        with st.container():
+            # Create a 2x2 grid for trading decisions
+            for row in range(2):
+                cols = st.columns(2)
+                for col in range(2):
+                    player_num = row * 2 + col + 1
+                    if player_num <= st.session_state.num_players:
+                        with cols[col]:
+                            with st.container(border=True):
+                                st.markdown(f"#### {st.session_state.player_names[player_num]}")
+                                # Trading decision tile
+                                if st.session_state.current_day_index in breakpoints:
+                                    st.session_state.waiting_for_trade = True
+                                render_trading_interface(
+                                    df.iloc[st.session_state.current_day_index]['Price'],
+                                    st.session_state.portfolios[player_num],
+                                    player_num,
+                                    is_breakpoint=st.session_state.current_day_index in breakpoints
+                                )
 
     # Stats tiles below the price chart
     st.markdown("### Portfolio Stats")
-    stats_cols = st.columns(st.session_state.num_players)
-    
-    for player_num in range(1, st.session_state.num_players + 1):
-        with stats_cols[player_num - 1]:
-            with st.container(border=True):
-                # Add player name input
-                player_name = st.text_input(
-                    "Player Name",
-                    value=st.session_state.player_names[player_num],
-                    key=f"player_name_{player_num}"
-                )
-                if player_name != st.session_state.player_names[player_num]:
-                    st.session_state.player_names[player_num] = player_name
-                    st.rerun()
-                
-                st.markdown(f"#### {st.session_state.player_names[player_num]}")
-                
-                # Current position tile
-                current_price = df.iloc[st.session_state.current_day_index]['Price']
-                current_date = df.iloc[st.session_state.current_day_index]['Date']
-                st.session_state.portfolios[player_num]['pnl_calculator'].update_portfolio_value(current_price, current_date)
-                portfolio_value = st.session_state.portfolios[player_num]['pnl_calculator'].get_portfolio_value(current_price)
-                
-                # Display position information in a 2x2 tile layout
-                row1_col1, row1_col2 = st.columns(2)
-                with row1_col1:
-                    st.metric("Cash", f"${st.session_state.portfolios[player_num]['cash']:.2f}")
-                with row1_col2:
-                    st.metric("Portfolio", f"${portfolio_value:.2f}")
-
-                row2_col1, row2_col2 = st.columns(2)
-                with row2_col1:
-                    st.metric("Positions", f"{st.session_state.portfolios[player_num]['positions']}")
-                with row2_col2:
-                    st.metric("PnL", f"${st.session_state.portfolios[player_num]['pnl_calculator'].get_current_pnl():.2f}")
-
-                if st.session_state.current_day_index > 0:
-                    metrics = st.session_state.portfolios[player_num]['pnl_calculator'].get_performance_metrics()
-                    row3_col1, row3_col2 = st.columns(2)
-                    with row3_col1:
-                        st.metric(
-                            "Total Return",
-                            f"{metrics['total_return']:.2f}%",
-                            delta=f"{metrics['total_return']:.2f}%"
+    # Create a 2x2 grid for stats
+    for row in range(2):
+        cols = st.columns(2)
+        for col in range(2):
+            player_num = row * 2 + col + 1
+            if player_num <= st.session_state.num_players:
+                with cols[col]:
+                    with st.container(border=True):
+                        # Add player name input
+                        player_name = st.text_input(
+                            "Player Name",
+                            value=st.session_state.player_names[player_num],
+                            key=f"player_name_{player_num}"
                         )
-                    with row3_col2:
-                        st.metric(
-                            "Max Drawdown",
-                            f"{metrics['max_drawdown']:.2f}%"
-                        )
+                        if player_name != st.session_state.player_names[player_num]:
+                            st.session_state.player_names[player_num] = player_name
+                            st.rerun()
+                        
+                        st.markdown(f"#### {st.session_state.player_names[player_num]}")
+                        
+                        # Current position tile
+                        current_price = df.iloc[st.session_state.current_day_index]['Price']
+                        current_date = df.iloc[st.session_state.current_day_index]['Date']
+                        st.session_state.portfolios[player_num]['pnl_calculator'].update_portfolio_value(current_price, current_date)
+                        portfolio_value = st.session_state.portfolios[player_num]['pnl_calculator'].get_portfolio_value(current_price)
+                        
+                        # Display position information in a 2x2 tile layout
+                        row1_col1, row1_col2 = st.columns(2)
+                        with row1_col1:
+                            st.metric("Cash", f"${st.session_state.portfolios[player_num]['cash']:.2f}")
+                        with row1_col2:
+                            st.metric("Portfolio", f"${portfolio_value:.2f}")
+
+                        row2_col1, row2_col2 = st.columns(2)
+                        with row2_col1:
+                            st.metric("Positions", f"{st.session_state.portfolios[player_num]['positions']}")
+                        with row2_col2:
+                            st.metric("PnL", f"${st.session_state.portfolios[player_num]['pnl_calculator'].get_current_pnl():.2f}")
+
+                        if st.session_state.current_day_index > 0:
+                            metrics = st.session_state.portfolios[player_num]['pnl_calculator'].get_performance_metrics()
+                            row3_col1, row3_col2 = st.columns(2)
+                            with row3_col1:
+                                st.metric(
+                                    "Total Return",
+                                    f"{metrics['total_return']:.2f}%",
+                                    delta=f"{metrics['total_return']:.2f}%"
+                                )
+                            with row3_col2:
+                                st.metric(
+                                    "Max Drawdown",
+                                    f"{metrics['max_drawdown']:.2f}%"
+                                )
 
     # Performance metrics
     if st.session_state.current_day_index > 0:

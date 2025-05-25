@@ -219,7 +219,9 @@ def main():
     # Auto progress logic
     if st.session_state.auto_progress and not st.session_state.waiting_for_trade:
         if st.session_state.current_day_index < len(df) - 1:
-            time.sleep(1)  # Sleep for 1 second
+            TIME_TO_RUN_SEC = 10
+            sleep_interval = TIME_TO_RUN_SEC / len(df)
+            time.sleep(sleep_interval)
             st.session_state.current_day_index += 1
             st.rerun()
         else:

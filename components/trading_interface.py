@@ -19,13 +19,20 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         player_num: Player number (1-4)
         is_breakpoint: Whether the current day is a breakpoint
     """
-    # Add player color styling
+    # Add all styles in one block
     st.markdown(
         f"""
         <style>
         .player-{player_num} {{
             color: {PLAYER_COLORS[player_num]};
             font-weight: bold;
+        }}
+        div[data-testid="stRadio"] {{ 
+            margin-top: -18px; 
+            margin-bottom: 0px; 
+        }}
+        [data-testid="stMetricValue"] {{
+            font-size: 1.5rem !important;
         }}
         </style>
         """,
@@ -35,20 +42,11 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
     with st.container():
         # Player name and Action radio button should be close together
         st.markdown(f'<div class="player-{player_num}">{f"Player {player_num}"}</div>', unsafe_allow_html=True)
-        # Custom CSS to reduce space above the radio button
-        st.markdown(
-            """
-            <style>
-            div[data-testid="stRadio"] { margin-top: -18px; margin-bottom: 0px; }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        
         # Trading action selection
-        action = st.radio(
+        action = st.selectbox(
             "Action",
             ["Buy", "Sell", "Hold"],
-            horizontal=True,
             key=f"action_radio_{player_num}"
         )
         
@@ -64,12 +62,12 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         )
         
         # Calculate and display trade impact
-        trade_value = quantity * current_price
-        st.metric(
-            "Value",
-            f"${trade_value:.2f}",
-            f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
-        )
+        # trade_value = quantity * current_price
+        # st.metric(
+        #     "Value",
+        #     f"${trade_value:.2f}",
+        #     f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
+        # )
         
         # Execute trade button
         if st.button("Execute Trade", key=f"execute_trade_{player_num}", disabled=not is_breakpoint):

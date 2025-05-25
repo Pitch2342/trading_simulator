@@ -33,8 +33,17 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
     )
     
     with st.container():
-        st.markdown(f'<div class="player-{player_num}">', unsafe_allow_html=True)
-        
+        # Player name and Action radio button should be close together
+        st.markdown(f'<div class="player-{player_num}">{f"Player {player_num}"}</div>', unsafe_allow_html=True)
+        # Custom CSS to reduce space above the radio button
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stRadio"] { margin-top: -18px; margin-bottom: 0px; }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
         # Trading action selection
         action = st.radio(
             "Action",

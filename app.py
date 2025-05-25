@@ -125,7 +125,6 @@ def main():
                     if player_num <= st.session_state.num_players:
                         with cols[col]:
                             with st.container(border=True):
-                                st.markdown(f"#### {st.session_state.player_names[player_num]}")
                                 # Trading decision tile
                                 if st.session_state.current_day_index in breakpoints:
                                     st.session_state.waiting_for_trade = True

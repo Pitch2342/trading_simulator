@@ -44,11 +44,12 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         )
         
         # Use a single row layout instead of columns
+        max_quantity = int(portfolio['cash'] / current_price) if action == "Buy" else portfolio['positions']
         quantity = st.number_input(
             "Qty",
             min_value=0,
-            max_value=int(portfolio['cash'] / current_price) if action == "Buy" else portfolio['positions'],
-            value=0,
+            max_value=max_quantity,
+            value=0 if max_quantity == 0 else 1,
             step=1,
             key=f"quantity_input_{player_num}"
         )

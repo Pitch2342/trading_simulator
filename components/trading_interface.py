@@ -97,6 +97,6 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
                 except ValueError as e:
                     st.error(str(e))
             
-            st.experimental_rerun()
+            st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)

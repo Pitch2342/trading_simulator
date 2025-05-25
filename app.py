@@ -66,7 +66,7 @@ def main():
             st.session_state.auto_progress = False
             st.session_state.waiting_for_trade = False
             st.session_state.trade_made = False
-            st.experimental_rerun()
+            st.rerun()
     with header_col2:
         st.markdown("### Progress Control")
         col1, col2, col3 = st.columns(3)
@@ -76,11 +76,11 @@ def main():
                 st.session_state.waiting_for_trade = False
                 st.session_state.trade_made = False
                 st.session_state.current_day_index += 1
-                st.experimental_rerun()
+                st.rerun()
         with col2:
             if st.button("Stop"):
                 st.session_state.auto_progress = False
-                st.experimental_rerun()
+                st.rerun()
         with col3:
             num_players = st.number_input("Number of Players", min_value=1, max_value=4, value=st.session_state.num_players)
             if num_players != st.session_state.num_players:
@@ -97,7 +97,7 @@ def main():
                         new_player_names[i] = f"Player {i}"
                 st.session_state.portfolios = new_portfolios
                 st.session_state.player_names = new_player_names
-                st.experimental_rerun()
+                st.rerun()
     
     # Load selected ticker data
     ticker_path = os.path.join('data', f"{st.session_state.selected_ticker}.csv")
@@ -144,7 +144,7 @@ def main():
                 )
                 if player_name != st.session_state.player_names[player_num]:
                     st.session_state.player_names[player_num] = player_name
-                    st.experimental_rerun()
+                    st.rerun()
                 
                 st.markdown(f"#### {st.session_state.player_names[player_num]}")
                 
@@ -221,7 +221,7 @@ def main():
         if st.session_state.current_day_index < len(df) - 1:
             time.sleep(1)  # Sleep for 1 second
             st.session_state.current_day_index += 1
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.session_state.auto_progress = False
             st.warning("You've reached the end of the simulation!")

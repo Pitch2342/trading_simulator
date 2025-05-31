@@ -62,12 +62,12 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         )
         
         # Calculate and display trade impact
-        # trade_value = quantity * current_price
-        # st.metric(
-        #     "Value",
-        #     f"${trade_value:.2f}",
-        #     f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
-        # )
+        trade_value = quantity * current_price
+        st.metric(
+            "Value",
+            f"${trade_value:.2f}",
+            f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
+        )
         
         # Execute trade button
         if st.button("Execute Trade", key=f"execute_trade_{player_num}", disabled=not is_breakpoint):

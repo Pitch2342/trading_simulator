@@ -61,7 +61,7 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
         xaxis_title='Date',
         yaxis_title='Price',
         showlegend=True,
-        height=500,
+        height=600,
         # Add a subtle grid
         xaxis=dict(
             showgrid=True,

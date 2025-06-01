@@ -1,6 +1,7 @@
 import streamlit as st
 from typing import Dict
 from utils.visual_configs import PLAYER_COLORS
+from utils.visual_configs import CURRENCY_INDICATOR
 
 def render_trading_interface(current_price: float, portfolio: Dict, player_num: int, is_breakpoint: bool = False) -> None:
     """
@@ -59,8 +60,8 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         trade_value = quantity * current_price
         st.metric(
             "Value",
-            f"${trade_value:.2f}",
-            f"Remaining: ${(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
+            f"{CURRENCY_INDICATOR}{trade_value:.2f}",
+            f"Remaining: {CURRENCY_INDICATOR}{(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
         )
         
         # Execute trade button

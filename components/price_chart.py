@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 from utils.data_handler import mask_future_data
+from utils.visual_configs import CURRENCY_INDICATOR
 
 def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> None:
     """
@@ -16,7 +17,7 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
     st.markdown(
         f"""
         <div style='text-align: center; padding: 10px; margin-bottom: 5px;'>
-            <h3 style='margin: 0; color: white; font-weight: 500;'>${current_price:.2f}</h3>
+            <h3 style='margin: 0; color: white; font-weight: 500;'>{CURRENCY_INDICATOR}{current_price:.2f}</h3>
         </div>
         """,
         unsafe_allow_html=True

@@ -5,6 +5,7 @@ from components.csv_uploader import render_csv_uploader, download_sample_csv
 from utils.portfolio_manager import reset_all_portfolios, update_player_portfolios
 from utils.portfolio_manager import initialize_portfolios
 from utils.session_manager import reset_simulation_state
+from utils.visual_configs import CURRENCY_INDICATOR
 
 def handle_data_source_selection():
     """Handle data source selection between predefined tickers and uploaded CSV"""
@@ -81,7 +82,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
             with admin_col1:
                 # Starting cash setting
                 new_starting_cash = st.number_input(
-                    "Starting Cash ($)",
+                    "Starting Cash ({CURRENCY_INDICATOR})",
                     min_value=1000,
                     max_value=1000000,
                     value=st.session_state.starting_cash,
@@ -94,7 +95,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                     
                 if st.button("Apply Starting Cash", help="Apply new starting cash to all players (resets portfolios)"):
                     reset_all_portfolios()
-                    st.success(f"All portfolios reset with ${st.session_state.starting_cash:,.2f} starting cash")
+                    st.success(f"All portfolios reset with {CURRENCY_INDICATOR}{st.session_state.starting_cash:,.2f} starting cash")
                     st.rerun()
             
             with admin_col2:
@@ -196,7 +197,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
             st.markdown("### Current Settings")
             settings_col1, settings_col2, settings_col3, settings_col4 = st.columns(4)
             with settings_col1:
-                st.metric("Starting Cash", f"${st.session_state.starting_cash:,.2f}")
+                st.metric("Starting Cash", f"{CURRENCY_INDICATOR}{st.session_state.starting_cash:,.2f}")
             with settings_col2:
                 st.metric("Simulation Duration", f"{st.session_state.time_to_run_sec}s")
             with settings_col3:

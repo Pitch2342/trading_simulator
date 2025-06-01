@@ -5,3 +5,5 @@ PLAYER_COLORS = {
     3: '#9467bd',  # Purple
     4: '#8c564b'   # Brown
 }
+
+CURRENCY_INDICATOR = '₹'

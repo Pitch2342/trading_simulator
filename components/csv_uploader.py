@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 from typing import Optional, Tuple
+from utils.visual_configs import CURRENCY_INDICATOR
 
 def validate_csv_format(df: pd.DataFrame) -> Tuple[bool, str]:
     """
@@ -100,7 +101,7 @@ def render_csv_uploader() -> Optional[pd.DataFrame]:
                 with col1:
                     st.metric("Total Rows", len(df))
                 with col2:
-                    st.metric("Price Range", f"${df['Price'].min():.2f} - ${df['Price'].max():.2f}")
+                    st.metric("Price Range", f"{CURRENCY_INDICATOR}{df['Price'].min():.2f} - {CURRENCY_INDICATOR}{df['Price'].max():.2f}")
                 
                 col3, col4 = st.columns(2)
                 with col3:

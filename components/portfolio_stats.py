@@ -2,17 +2,30 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 from utils.visual_configs import PLAYER_COLORS
+from utils.visual_configs import CURRENCY_INDICATOR
 
 def render_portfolio_stats(df, current_day_index):
     """Render portfolio statistics for all players"""
     st.markdown("### Portfolio Summary")
+
+    # Add all styles in one block for player names
+    st.markdown(
+        f"""
+        <style>
+        {"".join([f".player-{i} {{ color: {PLAYER_COLORS[i]}; font-weight: bold; }}" for i in range(1, st.session_state.num_players + 1)])}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     # Create a horizontal layout for stats
     cols = st.columns(st.session_state.num_players)
     
     for player_num in range(1, st.session_state.num_players + 1):
         with cols[player_num - 1]:
             with st.container(border=True):
-                st.markdown(f"#### {st.session_state.player_names[player_num]}")
+                # Use HTML markdown to apply color and bold styling
+                st.markdown(f'<div class="player-{player_num}">{st.session_state.player_names[player_num]}</div>', unsafe_allow_html=True)
                 
                 # Current position calculations
                 current_price = df.iloc[current_day_index]['Price']
@@ -48,11 +61,11 @@ def render_portfolio_stats(df, current_day_index):
                         'Sharpe'
                     ],
                     'Value': [
-                        f"${total_investment:,.2f}",
-                        f"${portfolio_value:,.2f}",
-                        f"${pnl:,.2f}",
-                        f"${cash_in_hand:,.2f}",
-                        f"${equity_in_hand:,.2f}",
+                        f"{CURRENCY_INDICATOR}{total_investment:,.2f}",
+                        f"{CURRENCY_INDICATOR}{portfolio_value:,.2f}",
+                        f"{CURRENCY_INDICATOR}{pnl:,.2f}",
+                        f"{CURRENCY_INDICATOR}{cash_in_hand:,.2f}",
+                        f"{CURRENCY_INDICATOR}{equity_in_hand:,.2f}",
                         f"{stock_qty:,}",
                         f"{total_returns_pct:.2f}%",
                         f"{drawdown:.2f}%",
@@ -101,7 +114,7 @@ def render_performance_charts():
         fig.update_layout(
             title='Portfolio Values Over Time',
             xaxis_title='Date',
-            yaxis_title='Value ($)',
+            yaxis_title='Value ({CURRENCY_INDICATOR})',
             showlegend=True,
             height=300,
             hovermode='x unified'
@@ -114,4 +127,4 @@ def render_performance_charts():
         # for player_num in range(1, st.session_state.num_players + 1):
         #     st.markdown(f"**{st.session_state.player_names[player_num]}**")
         #     for i, trade in enumerate(st.session_state.portfolios[player_num]['trading_history'], 1):
-        #         st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ ${trade['price']:.2f}") 
+        #         st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ {CURRENCY_INDICATOR}{trade['price']:.2f}") 

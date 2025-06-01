@@ -103,4 +103,72 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
     )
     
     # Display chart
-    st.plotly_chart(fig, use_container_width=True) 
+    st.plotly_chart(fig, use_container_width=True)
+
+def render_full_price_preview(df, breakpoints):
+    """
+    Render full price chart preview with all breakpoints marked
+    """
+    fig = go.Figure()
+    
+    # Add price line
+    fig.add_trace(go.Scatter(
+        x=df['Date'],
+        y=df['Price'],
+        mode='lines',
+        name='Price',
+        line=dict(color='blue', width=2)
+    ))
+    
+    # Add vertical lines for all breakpoints
+    for bp in breakpoints:
+        fig.add_shape(
+            type="line",
+            x0=df.iloc[bp]['Date'],
+            x1=df.iloc[bp]['Date'],
+            y0=df['Price'].min(),
+            y1=df['Price'].max(),
+            line=dict(
+                color="red",
+                width=2,
+                dash="solid"
+            )
+        )
+    
+    # Add breakpoint markers
+    if breakpoints:
+        breakpoint_dates = df.loc[breakpoints, 'Date']
+        breakpoint_prices = df.loc[breakpoints, 'Price']
+        
+        fig.add_trace(go.Scatter(
+            x=breakpoint_dates,
+            y=breakpoint_prices,
+            mode='markers',
+            name='Decision Points',
+            marker=dict(
+                color='red',
+                size=8,
+                symbol='diamond'
+            )
+        ))
+    
+    # Update layout
+    fig.update_layout(
+        title=f'Full Price Chart Preview - {st.session_state.selected_ticker}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        showlegend=True,
+        height=400,
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',
+            gridwidth=1
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',
+            gridwidth=1
+        )
+    )
+    
+    return fig 

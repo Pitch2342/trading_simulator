@@ -82,9 +82,9 @@ def render_performance_charts():
         
         st.plotly_chart(fig, use_container_width=True)
         
-        # Display trading history for all players
-        st.subheader("Trading History")
-        for player_num in range(1, st.session_state.num_players + 1):
-            st.markdown(f"**{st.session_state.player_names[player_num]}**")
-            for i, trade in enumerate(st.session_state.portfolios[player_num]['trading_history'], 1):
-                st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ ${trade['price']:.2f}") 
+        # # Display trading history for all players
+        # st.subheader("Trading History")
+        # for player_num in range(1, st.session_state.num_players + 1):
+        #     st.markdown(f"**{st.session_state.player_names[player_num]}**")
+        #     for i, trade in enumerate(st.session_state.portfolios[player_num]['trading_history'], 1):
+        #         st.write(f"Trade {i}: {trade['action'].upper()} {trade['quantity']} @ ${trade['price']:.2f}") 

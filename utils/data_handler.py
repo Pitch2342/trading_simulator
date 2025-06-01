@@ -1,18 +1,25 @@
 import pandas as pd
-from typing import List, Tuple
+from typing import List, Tuple, Union
+import os
 
-def load_data(file) -> pd.DataFrame:
+def load_data(file: Union[str, any]) -> pd.DataFrame:
     """
-    Load and validate CSV data from uploaded file.
+    Load and validate CSV data from file path or uploaded file.
     
     Args:
-        file: Uploaded CSV file object
+        file: File path (string) or uploaded file object
         
     Returns:
         pd.DataFrame: Processed DataFrame with validated data
     """
     try:
-        df = pd.read_csv(file)
+        # Handle both file paths and uploaded file objects
+        if isinstance(file, str):
+            # File path - existing functionality
+            df = pd.read_csv(file)
+        else:
+            # Uploaded file object
+            df = pd.read_csv(file)
         
         # Validate required columns
         required_columns = ['Date', 'Price', 'Breakpoint']
@@ -23,11 +30,15 @@ def load_data(file) -> pd.DataFrame:
         df['Date'] = pd.to_datetime(df['Date'])
         
         # Sort by date
-        df = df.sort_values('Date')
+        df = df.sort_values('Date').reset_index(drop=True)
         
         # Validate price data
         if not df['Price'].dtype in ['float64', 'int64']:
             df['Price'] = pd.to_numeric(df['Price'], errors='coerce')
+        
+        # Handle any NaN values in price
+        if df['Price'].isna().any():
+            raise ValueError("Price column contains invalid numeric values")
         
         # Validate breakpoint data
         df['Breakpoint'] = df['Breakpoint'].astype(bool)

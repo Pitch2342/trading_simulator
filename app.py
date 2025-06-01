@@ -101,41 +101,84 @@ def main():
     
     with header_col1:
         st.title("Trading Decision Simulator")
-        # Display current ticker (read-only)
-        st.caption(f"Current Ticker: {st.session_state.selected_ticker}")
+        # Display current data source info
+        if st.session_state.data_source == 'uploaded':
+            if st.session_state.uploaded_data is not None:
+                st.caption("📊 Using custom uploaded data")
+            else:
+                st.caption("📤 Ready to upload custom data - use Admin Settings below")
+        else:
+            st.caption(f"📈 Current Ticker: {st.session_state.selected_ticker}")
     
     with header_col2:
-        handle_progress_controls()
+        # Only show progress controls if we have data to work with
+        if st.session_state.data_source == 'predefined' or st.session_state.uploaded_data is not None:
+            handle_progress_controls()
     
-    # Load selected ticker data
-    ticker_path = os.path.join('data', f"{st.session_state.selected_ticker}.csv")
-    df = load_data(ticker_path)
-    breakpoints = extract_breakpoints(df)
-    
-    # Ensure current_day_index is within bounds
-    if st.session_state.current_day_index >= len(df):
-        st.session_state.current_day_index = len(df) - 1
-    
-    # Main simulation area
-    col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
-    
-    with col1:
-        render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
-    
-    with col2:
-        render_trading_grid(df, st.session_state.current_day_index, breakpoints)
+    # Load data based on selected source
+    if st.session_state.data_source == 'uploaded':
+        if st.session_state.uploaded_data is not None:
+            df = st.session_state.uploaded_data
+            breakpoints = extract_breakpoints(df)
+            
+            # Ensure current_day_index is within bounds
+            if st.session_state.current_day_index >= len(df):
+                st.session_state.current_day_index = len(df) - 1
+            
+            # Main simulation area
+            col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
+            
+            with col1:
+                render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+            
+            with col2:
+                render_trading_grid(df, st.session_state.current_day_index, breakpoints)
 
-    # Render portfolio statistics
-    render_portfolio_stats(df, st.session_state.current_day_index)
-    
-    # Render performance charts and trading history
-    render_performance_charts()
+            # Render portfolio statistics
+            render_portfolio_stats(df, st.session_state.current_day_index)
+            
+            # Render performance charts and trading history
+            render_performance_charts()
 
-    # Handle auto progress logic
-    handle_auto_progress(df)
+            # Handle auto progress logic
+            handle_auto_progress(df)
+        else:
+            # Show upload interface prominently when no data is uploaded
+            st.info("🚀 **Ready to upload your custom trading data!** Use the Admin Settings panel below to get started.")
+            # Force admin panel to be expanded when no data is uploaded
+            df = None
+            breakpoints = []
+    else:
+        # Load predefined ticker data
+        ticker_path = os.path.join('data', f"{st.session_state.selected_ticker}.csv")
+        df = load_data(ticker_path)
+        breakpoints = extract_breakpoints(df)
+        
+        # Ensure current_day_index is within bounds
+        if st.session_state.current_day_index >= len(df):
+            st.session_state.current_day_index = len(df) - 1
+        
+        # Main simulation area
+        col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
+        
+        with col1:
+            render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+        
+        with col2:
+            render_trading_grid(df, st.session_state.current_day_index, breakpoints)
 
-    # Render admin settings panel
-    render_admin_panel(df, breakpoints)
+        # Render portfolio statistics
+        render_portfolio_stats(df, st.session_state.current_day_index)
+        
+        # Render performance charts and trading history
+        render_performance_charts()
+
+        # Handle auto progress logic
+        handle_auto_progress(df)
+
+    # Render admin settings panel - force expanded if no uploaded data
+    should_expand = st.session_state.data_source == 'uploaded' and st.session_state.uploaded_data is None
+    render_admin_panel(df, breakpoints, force_expanded=should_expand)
 
     # Inject custom CSS
     inject_custom_css()

@@ -103,7 +103,8 @@ def render_performance_charts():
             xaxis_title='Date',
             yaxis_title='Value ($)',
             showlegend=True,
-            height=300
+            height=300,
+            hovermode='x unified'
         )
         
         st.plotly_chart(fig, use_container_width=True)

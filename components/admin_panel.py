@@ -77,7 +77,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
         
         # Only show the rest of the admin panel if we have valid data or if we're in upload mode
         if df is not None or st.session_state.data_source == 'uploaded':
-            admin_col1, admin_col2, admin_col3 = st.columns(3)
+            admin_col1, admin_col2 = st.columns(2)
             
             with admin_col1:
                 # Starting cash setting
@@ -99,21 +99,6 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                     st.rerun()
             
             with admin_col2:
-                # Time to run setting
-                new_time_to_run = st.number_input(
-                    "Simulation Duration (seconds)",
-                    min_value=1,
-                    max_value=300,
-                    value=st.session_state.time_to_run_sec,
-                    step=1,
-                    help="Total time for the simulation to run from start to finish"
-                )
-                
-                if new_time_to_run != st.session_state.time_to_run_sec:
-                    st.session_state.time_to_run_sec = new_time_to_run
-                    st.success(f"Simulation duration set to {st.session_state.time_to_run_sec} seconds")
-            
-            with admin_col3:
                 # Number of players setting
                 new_num_players = st.number_input(
                     "Number of Players",
@@ -131,7 +116,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                     st.session_state.player_names = new_player_names
                     st.success(f"Number of players set to {st.session_state.num_players}")
                     st.rerun()
-            
+
             # Player Names Configuration
             st.markdown("---")
             st.markdown("### Player Names")
@@ -149,6 +134,41 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                         st.session_state.player_names[player_num] = new_player_name
                         st.rerun()
             
+            # UI Settings Configuration
+            st.markdown("---")
+            st.markdown("### UI Settings")
+            ui_col1, ui_col2 = st.columns(2)
+            
+            with ui_col1:
+                new_font_size = st.number_input(
+                    "Chart Hover Font Size",
+                    min_value=8,
+                    max_value=24,
+                    value=st.session_state.chart_hoverlabel_font_size,
+                    step=1,
+                    help="Set the font size for chart hover labels (applies to all charts)"
+                )
+                
+                if new_font_size != st.session_state.chart_hoverlabel_font_size:
+                    st.session_state.chart_hoverlabel_font_size = new_font_size
+                    st.success(f"Chart hover font size set to {new_font_size}px")
+                    st.rerun()
+            
+            with ui_col2:
+                # Time to run setting
+                new_time_to_run = st.number_input(
+                    "Simulation Duration (seconds)",
+                    min_value=1,
+                    max_value=300,
+                    value=st.session_state.time_to_run_sec,
+                    step=1,
+                    help="Total time for the simulation to run from start to finish"
+                )
+                
+                if new_time_to_run != st.session_state.time_to_run_sec:
+                    st.session_state.time_to_run_sec = new_time_to_run
+                    st.success(f"Simulation duration set to {st.session_state.time_to_run_sec} seconds")
+
             # Quick Actions
             st.markdown("---")
             st.markdown("### Quick Actions")

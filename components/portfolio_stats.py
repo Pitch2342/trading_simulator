@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 from utils.visual_configs import PLAYER_COLORS
-from utils.visual_configs import CURRENCY_INDICATOR
+from utils.visual_configs import CURRENCY_INDICATOR, get_hoverlabel_config
 
 def render_portfolio_stats(df, current_day_index):
     """Render portfolio statistics for all players"""
@@ -117,7 +117,8 @@ def render_performance_charts():
             yaxis_title='Value ({CURRENCY_INDICATOR})',
             showlegend=True,
             height=300,
-            hovermode='x unified'
+            hovermode='x unified',
+            hoverlabel=get_hoverlabel_config()
         )
         
         st.plotly_chart(fig, use_container_width=True)

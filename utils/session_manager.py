@@ -28,6 +28,8 @@ def initialize_session_state():
         st.session_state.uploaded_data = None
     if 'data_source' not in st.session_state:
         st.session_state.data_source = 'predefined'  # 'predefined' or 'uploaded'
+    if 'chart_hoverlabel_font_size' not in st.session_state:
+        st.session_state.chart_hoverlabel_font_size = 16
 
 def reset_simulation_state():
     """Reset simulation-specific state variables"""

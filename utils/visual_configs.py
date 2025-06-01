@@ -7,3 +7,10 @@ PLAYER_COLORS = {
 }
 
 CURRENCY_INDICATOR = '₹'
+
+def get_hoverlabel_config():
+    """Get consistent hoverlabel configuration for all charts"""
+    import streamlit as st
+    return dict(
+        font=dict(size=st.session_state.chart_hoverlabel_font_size)
+    )

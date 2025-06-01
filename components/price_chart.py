@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 from utils.data_handler import mask_future_data
-from utils.visual_configs import CURRENCY_INDICATOR
+from utils.visual_configs import CURRENCY_INDICATOR, get_hoverlabel_config
 
 def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> None:
     """
@@ -73,7 +73,8 @@ def render_progressive_chart(df, current_day_index: int, breakpoints: list) -> N
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.2)',  # lightgray with 20% opacity
             gridwidth=1
-        )
+        ),
+        hoverlabel=get_hoverlabel_config()
     )
     
     # Add vertical line for current day with improved styling
@@ -169,7 +170,8 @@ def render_full_price_preview(df, breakpoints):
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.2)',
             gridwidth=1
-        )
+        ),
+        hoverlabel=get_hoverlabel_config()
     )
     
     return fig 

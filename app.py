@@ -27,9 +27,13 @@ if 'current_day_index' not in st.session_state:
     st.session_state.current_day_index = 0
 if 'num_players' not in st.session_state:
     st.session_state.num_players = 1
+if 'starting_cash' not in st.session_state:
+    st.session_state.starting_cash = 10000
+if 'time_to_run_sec' not in st.session_state:
+    st.session_state.time_to_run_sec = 10
 if 'portfolios' not in st.session_state:
     st.session_state.portfolios = {
-        1: {'cash': 10000, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
+        1: {'cash': st.session_state.starting_cash, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
     }
 if 'player_names' not in st.session_state:
     st.session_state.player_names = {
@@ -43,6 +47,84 @@ if 'trade_made' not in st.session_state:
     st.session_state.trade_made = False
 if 'selected_ticker' not in st.session_state:
     st.session_state.selected_ticker = 'SAMPLE_SWINGS.csv'
+
+def reset_all_portfolios():
+    """Reset all portfolios with the current starting cash amount"""
+    for i in range(1, st.session_state.num_players + 1):
+        st.session_state.portfolios[i] = {
+            'cash': st.session_state.starting_cash, 
+            'positions': 0, 
+            'pnl_calculator': PnLCalculator(), 
+            'trading_history': []
+        }
+
+def render_full_price_preview(df, breakpoints):
+    """
+    Render full price chart preview with all breakpoints marked
+    """
+    fig = go.Figure()
+    
+    # Add price line
+    fig.add_trace(go.Scatter(
+        x=df['Date'],
+        y=df['Price'],
+        mode='lines',
+        name='Price',
+        line=dict(color='blue', width=2)
+    ))
+    
+    # Add vertical lines for all breakpoints
+    for bp in breakpoints:
+        fig.add_shape(
+            type="line",
+            x0=df.iloc[bp]['Date'],
+            x1=df.iloc[bp]['Date'],
+            y0=df['Price'].min(),
+            y1=df['Price'].max(),
+            line=dict(
+                color="red",
+                width=2,
+                dash="solid"
+            )
+        )
+    
+    # Add breakpoint markers
+    if breakpoints:
+        breakpoint_dates = df.loc[breakpoints, 'Date']
+        breakpoint_prices = df.loc[breakpoints, 'Price']
+        
+        fig.add_trace(go.Scatter(
+            x=breakpoint_dates,
+            y=breakpoint_prices,
+            mode='markers',
+            name='Decision Points',
+            marker=dict(
+                color='red',
+                size=8,
+                symbol='diamond'
+            )
+        ))
+    
+    # Update layout
+    fig.update_layout(
+        title=f'Full Price Chart Preview - {st.session_state.selected_ticker}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        showlegend=True,
+        height=400,
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',
+            gridwidth=1
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.2)',
+            gridwidth=1
+        )
+    )
+    
+    return fig
 
 def main():
     # Create header with title and progress controls
@@ -60,7 +142,7 @@ def main():
             st.session_state.selected_ticker = selected_ticker
             st.session_state.current_day_index = 0
             st.session_state.portfolios = {
-                i: {'cash': 10000, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
+                i: {'cash': st.session_state.starting_cash, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
                 for i in range(1, st.session_state.num_players + 1)
             }
             st.session_state.auto_progress = False
@@ -93,7 +175,7 @@ def main():
                         new_portfolios[i] = st.session_state.portfolios[i]
                         new_player_names[i] = st.session_state.player_names[i]
                     else:
-                        new_portfolios[i] = {'cash': 10000, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
+                        new_portfolios[i] = {'cash': st.session_state.starting_cash, 'positions': 0, 'pnl_calculator': PnLCalculator(), 'trading_history': []}
                         new_player_names[i] = f"Player {i}"
                 st.session_state.portfolios = new_portfolios
                 st.session_state.player_names = new_player_names
@@ -225,14 +307,85 @@ def main():
     # Auto progress logic
     if st.session_state.auto_progress and not st.session_state.waiting_for_trade:
         if st.session_state.current_day_index < len(df) - 1:
-            TIME_TO_RUN_SEC = 10
-            sleep_interval = TIME_TO_RUN_SEC / len(df)
+            sleep_interval = st.session_state.time_to_run_sec / len(df)
             time.sleep(sleep_interval)
             st.session_state.current_day_index += 1
             st.rerun()
         else:
             st.session_state.auto_progress = False
             st.warning("You've reached the end of the simulation!")
+
+    # Admin Settings Section
+    with st.expander("⚙️ Admin Settings", expanded=False):
+        st.markdown("### Simulation Configuration")
+        
+        admin_col1, admin_col2, admin_col3 = st.columns(3)
+        
+        with admin_col1:
+            # Starting cash setting
+            new_starting_cash = st.number_input(
+                "Starting Cash ($)",
+                min_value=1000,
+                max_value=1000000,
+                value=st.session_state.starting_cash,
+                step=1000,
+                help="Set the starting cash amount for all players"
+            )
+            
+            if new_starting_cash != st.session_state.starting_cash:
+                st.session_state.starting_cash = new_starting_cash
+                
+            if st.button("Apply Starting Cash", help="Apply new starting cash to all players (resets portfolios)"):
+                reset_all_portfolios()
+                st.success(f"All portfolios reset with ${st.session_state.starting_cash:,.2f} starting cash")
+                st.rerun()
+        
+        with admin_col2:
+            # Time to run setting
+            new_time_to_run = st.number_input(
+                "Simulation Duration (seconds)",
+                min_value=1,
+                max_value=300,
+                value=st.session_state.time_to_run_sec,
+                step=1,
+                help="Total time for the simulation to run from start to finish"
+            )
+            
+            if new_time_to_run != st.session_state.time_to_run_sec:
+                st.session_state.time_to_run_sec = new_time_to_run
+                st.success(f"Simulation duration set to {st.session_state.time_to_run_sec} seconds")
+        
+        with admin_col3:
+            # Reset simulation button
+            st.markdown("### Quick Actions")
+            if st.button("🔄 Reset Simulation", help="Reset simulation to beginning with current settings"):
+                st.session_state.current_day_index = 0
+                st.session_state.auto_progress = False
+                st.session_state.waiting_for_trade = False
+                st.session_state.trade_made = False
+                reset_all_portfolios()
+                st.success("Simulation reset to beginning")
+                st.rerun()
+        
+        # Add price chart preview section
+        st.markdown("---")
+        st.markdown("### Price Chart Preview")
+        st.markdown(f"**{len(breakpoints)} decision points** identified in the data")
+        
+        # Render the full price chart preview
+        preview_fig = render_full_price_preview(df, breakpoints)
+        st.plotly_chart(preview_fig, use_container_width=True)
+        
+        # Display current settings
+        st.markdown("---")
+        st.markdown("### Current Settings")
+        settings_col1, settings_col2, settings_col3 = st.columns(3)
+        with settings_col1:
+            st.metric("Starting Cash", f"${st.session_state.starting_cash:,.2f}")
+        with settings_col2:
+            st.metric("Simulation Duration", f"{st.session_state.time_to_run_sec}s")
+        with settings_col3:
+            st.metric("Players", st.session_state.num_players)
 
     # Inject custom CSS
     st.markdown(

@@ -1,13 +1,6 @@
 import streamlit as st
 from typing import Dict
-
-# Player colors for consistent visualization
-PLAYER_COLORS = {
-    1: '#1f77b4',  # Blue
-    2: '#ff7f0e',  # Orange
-    3: '#2ca02c',  # Green
-    4: '#d62728'   # Red
-}
+from utils.visual_configs import PLAYER_COLORS
 
 def render_trading_interface(current_price: float, portfolio: Dict, player_num: int, is_breakpoint: bool = False) -> None:
     """
@@ -41,7 +34,8 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
     
     with st.container():
         # Player name and Action radio button should be close together
-        st.markdown(f'<div class="player-{player_num}">{f"Player {player_num}"}</div>', unsafe_allow_html=True)
+        player_name = st.session_state.player_names.get(player_num, f"Player {player_num}")
+        st.markdown(f'<div class="player-{player_num}">{player_name}</div>', unsafe_allow_html=True)
         
         # Trading action selection
         action = st.selectbox(

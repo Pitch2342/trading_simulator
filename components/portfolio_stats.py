@@ -1,17 +1,11 @@
 import streamlit as st
 import plotly.graph_objects as go
-
-# Player colors for consistent visualization
-PLAYER_COLORS = {
-    1: '#1f77b4',  # Blue
-    2: '#ff7f0e',  # Orange
-    3: '#2ca02c',  # Green
-    4: '#d62728'   # Red
-}
+import pandas as pd
+from utils.visual_configs import PLAYER_COLORS
 
 def render_portfolio_stats(df, current_day_index):
     """Render portfolio statistics for all players"""
-    st.markdown("### Portfolio Stats")
+    st.markdown("### Portfolio Summary")
     # Create a horizontal layout for stats
     cols = st.columns(st.session_state.num_players)
     
@@ -20,39 +14,71 @@ def render_portfolio_stats(df, current_day_index):
             with st.container(border=True):
                 st.markdown(f"#### {st.session_state.player_names[player_num]}")
                 
-                # Current position tile
+                # Current position calculations
                 current_price = df.iloc[current_day_index]['Price']
                 current_date = df.iloc[current_day_index]['Date']
-                st.session_state.portfolios[player_num]['pnl_calculator'].update_portfolio_value(current_price, current_date)
-                portfolio_value = st.session_state.portfolios[player_num]['pnl_calculator'].get_portfolio_value(current_price)
+                portfolio = st.session_state.portfolios[player_num]
+                pnl_calc = portfolio['pnl_calculator']
                 
-                # Display position information in a 2x2 tile layout
-                row1_col1, row1_col2 = st.columns(2)
-                with row1_col1:
-                    st.metric("Cash", f"${st.session_state.portfolios[player_num]['cash']:.2f}")
-                with row1_col2:
-                    st.metric("Portfolio", f"${portfolio_value:.2f}")
-
-                row2_col1, row2_col2 = st.columns(2)
-                with row2_col1:
-                    st.metric("Positions", f"{st.session_state.portfolios[player_num]['positions']}")
-                with row2_col2:
-                    st.metric("PnL", f"${st.session_state.portfolios[player_num]['pnl_calculator'].get_current_pnl():.2f}")
-
-                # Always show performance metrics
-                metrics = st.session_state.portfolios[player_num]['pnl_calculator'].get_performance_metrics()
-                row3_col1, row3_col2 = st.columns(2)
-                with row3_col1:
-                    st.metric(
-                        "Total Return",
-                        f"{metrics['total_return']:.2f}%",
-                        delta=f"{metrics['total_return']:.2f}%"
-                    )
-                with row3_col2:
-                    st.metric(
-                        "Max Drawdown",
-                        f"{metrics['max_drawdown']:.2f}%"
-                    )
+                pnl_calc.update_portfolio_value(current_price, current_date)
+                portfolio_value = pnl_calc.get_portfolio_value(current_price)
+                pnl = pnl_calc.get_current_pnl()
+                metrics = pnl_calc.get_performance_metrics()
+                
+                # Calculate additional metrics
+                cash_in_hand = portfolio['cash']
+                equity_in_hand = portfolio['positions'] * current_price
+                stock_qty = portfolio['positions']
+                total_investment = pnl_calc.initial_cash
+                total_returns_pct = metrics['total_return']
+                drawdown = metrics['max_drawdown']
+                sharpe = metrics['sharpe_ratio']
+                
+                # Create a 2-column table display
+                metrics_data = {
+                    'Metric': [
+                        'Total Investment',
+                        'Current Portfolio Value',
+                        'PnL',
+                        'Cash in Hand',
+                        'Equity in Hand',
+                        'Stock Qty',
+                        'Total Returns %',
+                        'Drawdown',
+                        'Sharpe'
+                    ],
+                    'Value': [
+                        f"${total_investment:,.2f}",
+                        f"${portfolio_value:,.2f}",
+                        f"${pnl:,.2f}",
+                        f"${cash_in_hand:,.2f}",
+                        f"${equity_in_hand:,.2f}",
+                        f"{stock_qty:,}",
+                        f"{total_returns_pct:.2f}%",
+                        f"{drawdown:.2f}%",
+                        f"{sharpe:.3f}"
+                    ]
+                }
+                hidden_metrics = ['Drawdown','Sharpe']
+                metrics_df = pd.DataFrame(metrics_data)
+                filtered_df = metrics_df[~metrics_df['Metric'].isin(hidden_metrics)]
+                
+                # Apply conditional styling for Total Returns % and Current Portfolio Value
+                def color_returns(row):
+                    if row['Metric'] == 'Total Returns %':
+                        if total_returns_pct > 0:
+                            return ['', 'color: green']
+                        else:
+                            return ['', 'color: red']
+                    elif row['Metric'] == 'Current Portfolio Value':
+                        if portfolio_value > total_investment:
+                            return ['', 'color: green']
+                        else:
+                            return ['', 'color: red']
+                    return ['', '']
+                
+                styled_df = filtered_df.style.apply(color_returns, axis=1)
+                st.dataframe(styled_df, hide_index=True, use_container_width=True)
 
 def render_performance_charts():
     """Render performance charts and trading history"""

@@ -9,14 +9,6 @@ from components.admin_panel import render_admin_panel
 from utils.session_manager import initialize_session_state, reset_simulation_state
 from utils.portfolio_manager import initialize_portfolios, update_player_portfolios
 
-# Player colors for consistent visualization
-PLAYER_COLORS = {
-    1: '#1f77b4',  # Blue
-    2: '#ff7f0e',  # Orange
-    3: '#2ca02c',  # Green
-    4: '#d62728'   # Red
-}
-
 # Page configuration
 st.set_page_config(
     page_title="Trading Decision Simulator",
@@ -101,14 +93,14 @@ def main():
     
     with header_col1:
         st.title("Trading Decision Simulator")
-        # Display current data source info
-        if st.session_state.data_source == 'uploaded':
-            if st.session_state.uploaded_data is not None:
-                st.caption("📊 Using custom uploaded data")
-            else:
-                st.caption("📤 Ready to upload custom data - use Admin Settings below")
-        else:
-            st.caption(f"📈 Current Ticker: {st.session_state.selected_ticker}")
+        # # Display current data source info
+        # if st.session_state.data_source == 'uploaded':
+        #     if st.session_state.uploaded_data is not None:
+        #         st.caption("📊 Using custom uploaded data")
+        #     else:
+        #         st.caption("📤 Ready to upload custom data - use Admin Settings below")
+        # else:
+        #     st.caption(f"📈 Current Ticker: {st.session_state.selected_ticker}")
     
     with header_col2:
         # Only show progress controls if we have data to work with

@@ -23,7 +23,7 @@ def initialize_session_state():
     if 'trade_made' not in st.session_state:
         st.session_state.trade_made = False
     if 'selected_ticker' not in st.session_state:
-        st.session_state.selected_ticker = 'SAMPLE_SWINGS.csv'
+        st.session_state.selected_ticker = 'SAMPLE_SWINGS'
 
 def reset_simulation_state():
     """Reset simulation-specific state variables"""

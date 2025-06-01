@@ -24,22 +24,6 @@ st.set_page_config(
     layout="wide"
 )
 
-def handle_ticker_selection():
-    """Handle ticker selection and reset simulation state accordingly"""
-    available_tickers = [f.replace(".csv", "") for f in os.listdir('data') if f.endswith('.csv')]
-    selected_ticker = st.selectbox(
-        "Select Ticker",
-        options=available_tickers,
-        index=available_tickers.index(st.session_state.selected_ticker) if st.session_state.selected_ticker in available_tickers else 0
-    )
-    
-    if selected_ticker != st.session_state.selected_ticker:
-        st.session_state.selected_ticker = selected_ticker
-        st.session_state.current_day_index = 0
-        st.session_state.portfolios = initialize_portfolios(st.session_state.num_players, st.session_state.starting_cash)
-        reset_simulation_state()
-        st.rerun()
-
 def handle_progress_controls():
     """Handle start/stop buttons"""
     st.markdown("### Progress Control")
@@ -117,7 +101,8 @@ def main():
     
     with header_col1:
         st.title("Trading Decision Simulator")
-        handle_ticker_selection()
+        # Display current ticker (read-only)
+        st.caption(f"Current Ticker: {st.session_state.selected_ticker}")
     
     with header_col2:
         handle_progress_controls()

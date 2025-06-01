@@ -1,11 +1,36 @@
 import streamlit as st
+import os
 from components.price_chart import render_full_price_preview
 from utils.portfolio_manager import reset_all_portfolios, update_player_portfolios
+from utils.portfolio_manager import initialize_portfolios
+from utils.session_manager import reset_simulation_state
+
+def handle_ticker_selection():
+    """Handle ticker selection and reset simulation state accordingly"""
+    available_tickers = [f.replace(".csv", "") for f in os.listdir('data') if f.endswith('.csv')]
+    selected_ticker = st.selectbox(
+        "Select Ticker",
+        options=available_tickers,
+        index=available_tickers.index(st.session_state.selected_ticker) if st.session_state.selected_ticker in available_tickers else 0,
+        help="Choose which stock ticker to simulate"
+    )
+    
+    if selected_ticker != st.session_state.selected_ticker:
+        st.session_state.selected_ticker = selected_ticker
+        st.session_state.current_day_index = 0
+        st.session_state.portfolios = initialize_portfolios(st.session_state.num_players, st.session_state.starting_cash)
+        reset_simulation_state()
+        st.rerun()
 
 def render_admin_panel(df, breakpoints):
     """Render the admin settings panel"""
     with st.expander("⚙️ Admin Settings", expanded=False):
         st.markdown("### Simulation Configuration")
+        
+        # Add ticker selection at the top
+        ticker_col1, ticker_col2 = st.columns([1, 2])
+        with ticker_col1:
+            handle_ticker_selection()
         
         admin_col1, admin_col2, admin_col3 = st.columns(3)
         

@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from datetime import datetime
 from components.price_chart import render_full_price_preview
 from components.csv_uploader import render_csv_uploader, download_sample_csv
 from utils.portfolio_manager import reset_all_portfolios, update_player_portfolios
@@ -224,4 +225,41 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                 st.metric("Players", st.session_state.num_players)
             with settings_col4:
                 data_source_label = "Custom CSV" if st.session_state.data_source == 'uploaded' else "Predefined"
-                st.metric("Data Source", data_source_label) 
+                st.metric("Data Source", data_source_label)
+            
+            # Download Summary Image
+            st.markdown("---")
+            st.markdown("### Export & Download")
+            
+            if st.button("📊 Generate Portfolio Summary Image", 
+                        help="Generate and download a comprehensive image with portfolio stats and performance charts"):
+                try:
+                    from utils.visualization import create_portfolio_summary_image
+                    import base64
+                    
+                    # Create the summary image
+                    image_base64 = create_portfolio_summary_image(
+                        df, 
+                        st.session_state.current_day_index,
+                        st.session_state.portfolios,
+                        st.session_state.player_names,
+                        st.session_state.num_players
+                    )
+                    
+                    # Generate timestamp for filename
+                    timestamp = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
+                    
+                    # Create download button with new naming scheme
+                    st.download_button(
+                        label="💾 Download Image",
+                        data=base64.b64decode(image_base64),
+                        file_name=f"trading_sim_{timestamp}_{st.session_state.num_players}.png",
+                        mime="image/png",
+                        help="Click to download the portfolio summary image"
+                    )
+                    
+                    st.success("✅ Summary image generated successfully! Click the download button above to save it.")
+                    
+                except Exception as e:
+                    st.error(f"❌ Error generating summary image: {str(e)}")
+                    st.exception(e) 

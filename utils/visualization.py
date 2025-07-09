@@ -31,10 +31,10 @@ def create_portfolio_summary_image(df, current_day_index, portfolios, player_nam
         'Portfolio\nValue',
         'PnL',
         'Cash\nin Hand',
-        'Equity\nin Hand',
+        'Current\nEquity Value',
         'Stock\nQty',
         'Returns\n%',
-        'Drawdown',
+        'Max\nDrawdown',
         'Sharpe'
     ]
     
@@ -65,8 +65,8 @@ def create_portfolio_summary_image(df, current_day_index, portfolios, player_nam
             f"{CURRENCY_INDICATOR}{cash_in_hand:,.0f}",
             f"{CURRENCY_INDICATOR}{equity_in_hand:,.0f}",
             f"{stock_qty:,}",
-            f"{total_returns_pct:.1f}%",
-            f"{drawdown:.1f}%",
+            f"{'+' if total_returns_pct > 0 else ''}{total_returns_pct:.1f}%",
+            f"{'-' if drawdown > 0 else ''}{drawdown:.1f}%",
             f"{sharpe:.3f}"
         ])
     

@@ -71,7 +71,8 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
                 portfolio['trading_history'].append({
                     'action': 'hold',
                     'price': current_price,
-                    'quantity': 0
+                    'quantity': 0,
+                    'date': st.session_state.current_date
                 })
                 st.session_state.trade_made = True
             else:
@@ -88,7 +89,8 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
                     portfolio['trading_history'].append({
                         'action': action.lower(),
                         'price': current_price,
-                        'quantity': quantity
+                        'quantity': quantity,
+                        'date': st.session_state.current_date
                     })
                     st.session_state.trade_made = True
                 except ValueError as e:

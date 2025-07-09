@@ -36,6 +36,9 @@ def handle_progress_controls():
 
 def render_trading_grid(df, current_day_index, breakpoints):
     """Render the trading decision grid for all players"""
+    # Store current date in session state for trading history
+    st.session_state.current_date = df.iloc[current_day_index]['Date']
+    
     with st.container():
         # Create a 2x2 grid for trading decisions
         for row in range(2):

@@ -27,6 +27,13 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         }}
         [data-testid="stMetricValue"] {{
             font-size: 1.5rem !important;
+            color: inherit !important;
+        }}
+        [data-testid="stMetricDelta"] {{
+            color: inherit !important;
+        }}
+        [data-testid="stMetricDelta"] svg {{
+            display: none !important;
         }}
         </style>
         """,
@@ -47,8 +54,9 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         
         # Use a single row layout instead of columns
         max_quantity = int(portfolio['cash'] / current_price) if action == "Buy" else portfolio['positions']
+        remaining_positions = portfolio['positions']
         quantity = st.number_input(
-            "Qty",
+            f"Qty [Holding : {remaining_positions}]",
             min_value=0,
             max_value=max_quantity,
             value=0 if max_quantity == 0 else 1,
@@ -58,10 +66,15 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         
         # Calculate and display trade impact
         trade_value = quantity * current_price
+        
+        # Calculate remaining values after trade
+        remaining_cash = portfolio['cash'] - trade_value if action == "Buy" else portfolio['cash']
+        total_cash = portfolio['cash']
+        
         st.metric(
             "Value",
             f"{CURRENCY_INDICATOR}{trade_value:.2f}",
-            f"Remaining: {CURRENCY_INDICATOR}{(portfolio['cash'] - trade_value):.2f}" if action == "Buy" else f"Positions: {portfolio['positions'] - quantity}"
+            f"Cash: {CURRENCY_INDICATOR}{total_cash:.2f}"
         )
         
         # Execute trade button

@@ -71,11 +71,26 @@ def render_trading_interface(current_price: float, portfolio: Dict, player_num: 
         remaining_cash = portfolio['cash'] - trade_value if action == "Buy" else portfolio['cash']
         total_cash = portfolio['cash']
         
-        st.metric(
-            "Value",
-            f"{CURRENCY_INDICATOR}{trade_value:.2f}",
-            f"Cash: {CURRENCY_INDICATOR}{total_cash:.2f}"
-        )
+        # Grey-out display during auto-progress to indicate it is not updating
+        is_auto = st.session_state.get('auto_progress', False) and not st.session_state.get('waiting_for_trade', False)
+
+        if is_auto:
+            st.markdown(
+                f"""
+                <div style="opacity: 0.55;">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #9aa0a6;">Value</div>
+                    <div style="font-size: 1.5rem; color: #9aa0a6;">{CURRENCY_INDICATOR}{trade_value:.2f}</div>
+                    <div style="color: #9aa0a6; margin-top: 2px;">Cash: {CURRENCY_INDICATOR}{total_cash:.2f}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.metric(
+                "Value",
+                f"{CURRENCY_INDICATOR}{trade_value:.2f}",
+                f"Cash: {CURRENCY_INDICATOR}{total_cash:.2f}"
+            )
         
         # Execute trade button
         if st.button("Execute Trade", key=f"execute_trade_{player_num}", disabled=not is_breakpoint):

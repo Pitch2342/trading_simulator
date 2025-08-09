@@ -17,21 +17,50 @@ st.set_page_config(
 )
 
 def handle_progress_controls():
-    """Handle start/stop buttons"""
+    """Handle start/pause/skip buttons"""
     st.markdown("### Progress Control")
-    col1, col2 = st.columns(2)
-    
+
+    # Helper to get current df and breakpoints regardless of data source
+    df = None
+    breakpoints = []
+    if st.session_state.data_source == 'uploaded' and st.session_state.uploaded_data is not None:
+        df = st.session_state.uploaded_data
+    elif st.session_state.data_source == 'predefined':
+        ticker_path = os.path.join('data', f"{st.session_state.selected_ticker}.csv")
+        df = load_data(ticker_path)
+    if df is not None:
+        breakpoints = extract_breakpoints(df)
+
+    col1, col2, col3 = st.columns(3)
+
     with col1:
-        if st.button("Start"):
+        if st.button("Start", use_container_width=True):
             st.session_state.auto_progress = True
             st.session_state.waiting_for_trade = False
             st.session_state.trade_made = False
             st.session_state.current_day_index += 1
             st.rerun()
-    
+
     with col2:
-        if st.button("Stop"):
+        if st.button("Pause", use_container_width=True):
             st.session_state.auto_progress = False
+            st.rerun()
+
+    with col3:
+        if st.button("Skip", use_container_width=True):
+            if df is None or len(df) == 0:
+                st.stop()
+            current_index = st.session_state.current_day_index
+            next_breakpoints = [bp for bp in breakpoints if bp > current_index]
+            if next_breakpoints:
+                next_index = next_breakpoints[0]
+            else:
+                next_index = len(df) - 1
+            st.session_state.current_day_index = next_index
+            # Pause and set waiting status based on whether the destination is a breakpoint
+            st.session_state.auto_progress = False
+            st.session_state.waiting_for_trade = next_index in breakpoints
+            st.session_state.trade_made = False
             st.rerun()
 
 def render_trading_grid(df, current_day_index, breakpoints):

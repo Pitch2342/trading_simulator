@@ -2,8 +2,8 @@ from typing import Dict, List
 import pandas as pd
 
 class PnLCalculator:
-    def __init__(self):
-        self.initial_cash = 10000
+    def __init__(self, initial_cash: float = 10000):
+        self.initial_cash = float(initial_cash)
         self.cash = self.initial_cash
         self.positions = 0
         self.trades: List[Dict] = []

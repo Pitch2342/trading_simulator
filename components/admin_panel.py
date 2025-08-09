@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from components.price_chart import render_full_price_preview
 from components.csv_uploader import render_csv_uploader, download_sample_csv
-from utils.portfolio_manager import reset_all_portfolios, update_player_portfolios
+from utils.portfolio_manager import reset_all_portfolios
 from utils.portfolio_manager import initialize_portfolios
 from utils.session_manager import reset_simulation_state
 from utils.visual_configs import CURRENCY_INDICATOR
@@ -94,9 +94,11 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                 if new_starting_cash != st.session_state.starting_cash:
                     st.session_state.starting_cash = new_starting_cash
                     
-                if st.button("Apply Starting Cash", help="Apply new starting cash to all players (resets portfolios)"):
+                if st.button("Apply Starting Cash", help="Apply new starting cash to all players and reset simulation"):
+                    # Reset portfolios with new starting cash and reset simulation state
                     reset_all_portfolios()
-                    st.success(f"All portfolios reset with {CURRENCY_INDICATOR}{st.session_state.starting_cash:,.2f} starting cash")
+                    reset_simulation_state()
+                    st.success(f"Simulation reset. All players now start with {CURRENCY_INDICATOR}{st.session_state.starting_cash:,.2f}.")
                     st.rerun()
             
             with admin_col2:
@@ -111,11 +113,18 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                 )
                 
                 if new_num_players != st.session_state.num_players:
+                    # Update count
                     st.session_state.num_players = new_num_players
-                    new_portfolios, new_player_names = update_player_portfolios(new_num_players)
-                    st.session_state.portfolios = new_portfolios
-                    st.session_state.player_names = new_player_names
-                    st.success(f"Number of players set to {st.session_state.num_players}")
+                    # Preserve existing names where possible
+                    preserved_names = {}
+                    for i in range(1, new_num_players + 1):
+                        preserved_names[i] = st.session_state.player_names.get(i, f"Player {i}")
+                    st.session_state.player_names = preserved_names
+                    # Reinitialize portfolios for all players with current starting cash
+                    st.session_state.portfolios = initialize_portfolios(new_num_players, st.session_state.starting_cash)
+                    # Reset simulation state
+                    reset_simulation_state()
+                    st.success(f"Players set to {st.session_state.num_players}. Simulation reset with starting cash {CURRENCY_INDICATOR}{st.session_state.starting_cash:,.2f}.")
                     st.rerun()
 
             # Player Names Configuration
@@ -132,7 +141,11 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                         help=f"Set custom name for Player {player_num}"
                     )
                     if new_player_name != st.session_state.player_names[player_num]:
+                        # Update name and reset simulation/portfolios to apply across all views
                         st.session_state.player_names[player_num] = new_player_name
+                        reset_simulation_state()
+                        st.session_state.portfolios = initialize_portfolios(st.session_state.num_players, st.session_state.starting_cash)
+                        st.success("Player names updated. Simulation reset.")
                         st.rerun()
             
             # UI Settings Configuration

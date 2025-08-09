@@ -34,8 +34,13 @@ def handle_progress_controls():
 
     col1, col2, col3 = st.columns(3)
 
+    # Determine end-of-simulation state
+    at_end = False
+    if df is not None and len(df) > 0:
+        at_end = st.session_state.current_day_index >= len(df) - 1
+
     with col1:
-        if st.button("Start", use_container_width=True):
+        if st.button("Start", use_container_width=True, disabled=at_end):
             st.session_state.auto_progress = True
             st.session_state.waiting_for_trade = False
             st.session_state.trade_made = False
@@ -43,12 +48,12 @@ def handle_progress_controls():
             st.rerun()
 
     with col2:
-        if st.button("Pause", use_container_width=True):
+        if st.button("Pause", use_container_width=True, disabled=at_end):
             st.session_state.auto_progress = False
             st.rerun()
 
     with col3:
-        if st.button("Skip", use_container_width=True):
+        if st.button("Skip", use_container_width=True, disabled=at_end):
             if df is None or len(df) == 0:
                 st.stop()
             current_index = st.session_state.current_day_index
@@ -143,6 +148,10 @@ def inject_custom_css():
             white-space: nowrap;
             overflow: visible;
             text-overflow: initial;
+        }
+        /* Strike-through styling for disabled control buttons at end */
+        button[kind="secondary"]:disabled, button:disabled {
+            text-decoration: line-through;
         }
         </style>
         ''' ,

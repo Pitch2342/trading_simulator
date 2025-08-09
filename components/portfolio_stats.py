@@ -95,22 +95,23 @@ def render_portfolio_stats(df, current_day_index):
 
 def render_performance_charts():
     """Render performance charts and trading history"""
-    if st.session_state.current_day_index > 0:
-        # Create portfolio value chart
-        fig = go.Figure()
-        
-        for player_num in range(1, st.session_state.num_players + 1):
-            if len(st.session_state.portfolios[player_num]['trading_history']) > 0:
-                daily_metrics = st.session_state.portfolios[player_num]['pnl_calculator'].daily_metrics
-                if not daily_metrics.empty:
-                    fig.add_trace(go.Scatter(
-                        x=daily_metrics['date'],
-                        y=daily_metrics['portfolio_value'],
-                        mode='lines',
-                        name=st.session_state.player_names[player_num],
-                        line=dict(color=PLAYER_COLORS[player_num])
-                    ))
-        
+    # Create portfolio value chart if any player has metrics
+    fig = go.Figure()
+    has_any_metrics = False
+
+    for player_num in range(1, st.session_state.num_players + 1):
+        daily_metrics = st.session_state.portfolios[player_num]['pnl_calculator'].daily_metrics
+        if not daily_metrics.empty:
+            fig.add_trace(go.Scatter(
+                x=daily_metrics['date'],
+                y=daily_metrics['portfolio_value'],
+                mode='lines',
+                name=st.session_state.player_names[player_num],
+                line=dict(color=PLAYER_COLORS[player_num])
+            ))
+            has_any_metrics = True
+
+    if has_any_metrics:
         fig.update_layout(
             title='Portfolio Values Over Time',
             xaxis_title='Date',
@@ -120,51 +121,50 @@ def render_performance_charts():
             hovermode='x unified',
             hoverlabel=get_hoverlabel_config()
         )
-        
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Display trading history for all players in collapsible section
-        with st.expander("📊 Trading History", expanded=False):
-            # Create a horizontal layout for trading history
-            cols = st.columns(st.session_state.num_players)
-            
-            for player_num in range(1, st.session_state.num_players + 1):
-                with cols[player_num - 1]:
-                    with st.container(border=True):
-                        # Use HTML markdown to apply color and bold styling
-                        st.markdown(f'<div class="player-{player_num}">{st.session_state.player_names[player_num]}</div>', unsafe_allow_html=True)
-                        
-                        trading_history = st.session_state.portfolios[player_num]['trading_history']
-                        
-                        if trading_history:
-                            # Create trading history data
-                            trade_data = []
-                            for i, trade in enumerate(trading_history, 1):
-                                # Format date if available, otherwise show trade number
-                                date_str = trade.get('date', f"Trade {i}")
-                                if hasattr(date_str, 'strftime'):
-                                    date_str = date_str.strftime('%m/%d/%Y')
-                                
-                                trade_data.append({
-                                    'Date': date_str,
-                                    'Action': trade['action'].upper(),
-                                    'Qty': trade['quantity'],
-                                    'Price': f"{CURRENCY_INDICATOR}{trade['price']:.2f}"
-                                })
-                            
-                            # Display as a styled dataframe
-                            trade_df = pd.DataFrame(trade_data)
-                            
-                            # Apply conditional styling for buy/sell actions
-                            def color_trades(row):
-                                if row['Action'] == 'BUY':
-                                    return ['', 'color: green', '', '']
-                                elif row['Action'] == 'SELL':
-                                    return ['', 'color: red', '', '']
-                                else:  # HOLD
-                                    return ['', 'color: gray', '', '']
-                            
-                            styled_trade_df = trade_df.style.apply(color_trades, axis=1)
-                            st.dataframe(styled_trade_df, hide_index=True, use_container_width=True)
-                        else:
-                            st.write("No trades yet") 
+
+    # Display trading history for all players in collapsible section (always visible)
+    with st.expander("📊 Trading History", expanded=False):
+        # Create a horizontal layout for trading history
+        cols = st.columns(st.session_state.num_players)
+
+        for player_num in range(1, st.session_state.num_players + 1):
+            with cols[player_num - 1]:
+                with st.container(border=True):
+                    # Use HTML markdown to apply color and bold styling
+                    st.markdown(f'<div class="player-{player_num}">{st.session_state.player_names[player_num]}</div>', unsafe_allow_html=True)
+
+                    trading_history = st.session_state.portfolios[player_num]['trading_history']
+
+                    if trading_history:
+                        # Create trading history data
+                        trade_data = []
+                        for i, trade in enumerate(trading_history, 1):
+                            # Format date if available, otherwise show trade number
+                            date_str = trade.get('date', f"Trade {i}")
+                            if hasattr(date_str, 'strftime'):
+                                date_str = date_str.strftime('%m/%d/%Y')
+
+                            trade_data.append({
+                                'Date': date_str,
+                                'Action': trade['action'].upper(),
+                                'Qty': trade['quantity'],
+                                'Price': f"{CURRENCY_INDICATOR}{trade['price']:.2f}"
+                            })
+
+                        # Display as a styled dataframe
+                        trade_df = pd.DataFrame(trade_data)
+
+                        # Apply conditional styling for buy/sell actions
+                        def color_trades(row):
+                            if row['Action'] == 'BUY':
+                                return ['', 'color: green', '', '']
+                            elif row['Action'] == 'SELL':
+                                return ['', 'color: red', '', '']
+                            else:  # HOLD
+                                return ['', 'color: gray', '', '']
+
+                        styled_trade_df = trade_df.style.apply(color_trades, axis=1)
+                        st.dataframe(styled_trade_df, hide_index=True, use_container_width=True)
+                    else:
+                        st.write("No trades yet")

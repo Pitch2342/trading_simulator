@@ -2,12 +2,13 @@ import streamlit as st
 import os
 import time
 from utils.data_handler import load_data, extract_breakpoints
-from components.price_chart import render_progressive_chart
+from components.price_chart import render_progressive_chart, build_progressive_figure
 from components.trading_interface import render_trading_interface
 from components.portfolio_stats import render_portfolio_stats, render_performance_charts
 from components.admin_panel import render_admin_panel
 from utils.session_manager import initialize_session_state, reset_simulation_state
 from utils.portfolio_manager import initialize_portfolios, update_player_portfolios
+from utils.visual_configs import CURRENCY_INDICATOR
 
 # Page configuration
 st.set_page_config(
@@ -87,17 +88,49 @@ def render_trading_grid(df, current_day_index, breakpoints):
                                 is_breakpoint=current_day_index in breakpoints
                             )
 
-def handle_auto_progress(df):
-    """Handle automatic progression logic"""
-    if st.session_state.auto_progress and not st.session_state.waiting_for_trade:
-        if st.session_state.current_day_index < len(df) - 1:
-            sleep_interval = st.session_state.time_to_run_sec / len(df)
-            time.sleep(sleep_interval)
-            st.session_state.current_day_index += 1
-            st.rerun()
-        else:
+def _render_chart_frame(ticker_placeholder, chart_placeholder, df, current_day_index, breakpoints):
+    """Render only the ticker and chart into provided placeholders"""
+    current_price = df.iloc[current_day_index]['Price']
+    ticker_placeholder.markdown(
+        f"""
+        <div style='text-align: center; padding: 10px; margin-bottom: 5px;'>
+            <h3 style='margin: 0; color: white; font-weight: 500;'>{CURRENCY_INDICATOR}{current_price:.2f}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    fig = build_progressive_figure(df, current_day_index, breakpoints)
+    chart_placeholder.plotly_chart(fig, use_container_width=True)
+
+def handle_auto_progress_live(df, breakpoints, ticker_placeholder, chart_placeholder):
+    """Update only ticker and chart in-place during auto progression"""
+    if not st.session_state.auto_progress or st.session_state.waiting_for_trade:
+        return
+    # Keep updating within the same run until breakpoint/end
+    while st.session_state.auto_progress and not st.session_state.waiting_for_trade:
+        if st.session_state.current_day_index >= len(df) - 1:
             st.session_state.auto_progress = False
             st.warning("You've reached the end of the simulation!")
+            st.rerun()
+            return
+
+        # Advance one step
+        st.session_state.current_day_index += 1
+
+        # Update only the chart/ticker
+        _render_chart_frame(ticker_placeholder, chart_placeholder, df, st.session_state.current_day_index, breakpoints)
+
+        # If we hit a breakpoint, pause and wait for trade
+        if st.session_state.current_day_index in breakpoints:
+            st.session_state.auto_progress = False
+            st.session_state.waiting_for_trade = True
+            st.session_state.trade_made = False
+            st.rerun()
+            return
+
+        # Sleep between frames
+        sleep_interval = st.session_state.time_to_run_sec / max(1, len(df))
+        time.sleep(sleep_interval)
 
 def inject_custom_css():
     """Inject custom CSS styling"""
@@ -153,7 +186,9 @@ def main():
             col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
             
             with col1:
-                render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+                ticker_placeholder = st.empty()
+                chart_placeholder = st.empty()
+                _render_chart_frame(ticker_placeholder, chart_placeholder, df, st.session_state.current_day_index, breakpoints)
             
             with col2:
                 render_trading_grid(df, st.session_state.current_day_index, breakpoints)
@@ -164,8 +199,8 @@ def main():
             # Render performance charts and trading history
             render_performance_charts()
 
-            # Handle auto progress logic
-            handle_auto_progress(df)
+            # Handle auto progress logic (only ticker/chart update)
+            handle_auto_progress_live(df, breakpoints, ticker_placeholder, chart_placeholder)
         else:
             # Show upload interface prominently when no data is uploaded
             st.info("🚀 **Ready to upload your custom trading data!** Use the Admin Settings panel below to get started.")
@@ -186,7 +221,9 @@ def main():
         col1, col2 = st.columns([3, 1])  # 75% for chart, 25% for trading decisions
         
         with col1:
-            render_progressive_chart(df, st.session_state.current_day_index, breakpoints)
+            ticker_placeholder = st.empty()
+            chart_placeholder = st.empty()
+            _render_chart_frame(ticker_placeholder, chart_placeholder, df, st.session_state.current_day_index, breakpoints)
         
         with col2:
             render_trading_grid(df, st.session_state.current_day_index, breakpoints)
@@ -197,8 +234,8 @@ def main():
         # Render performance charts and trading history
         render_performance_charts()
 
-        # Handle auto progress logic
-        handle_auto_progress(df)
+        # Handle auto progress logic (only ticker/chart update)
+        handle_auto_progress_live(df, breakpoints, ticker_placeholder, chart_placeholder)
 
     # Render admin settings panel - force expanded if no uploaded data
     should_expand = st.session_state.data_source == 'uploaded' and st.session_state.uploaded_data is None

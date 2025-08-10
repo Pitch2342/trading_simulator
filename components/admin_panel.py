@@ -276,3 +276,10 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                 except Exception as e:
                     st.error(f"❌ Error generating summary image: {str(e)}")
                     st.exception(e) 
+        
+        # Application metadata
+        # Reminder: whenever a change goes in, update VERSION_DATE.
+        APP_CREATOR = "Pitch"
+        VERSION_DATE = "2025-08-10"
+        st.markdown("---")
+        st.caption(f"Creator: {APP_CREATOR} | Version date: {VERSION_DATE}")

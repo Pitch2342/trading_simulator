@@ -105,13 +105,7 @@ def _render_chart_frame(ticker_placeholder, chart_placeholder, df, current_day_i
         unsafe_allow_html=True
     )
     fig = build_progressive_figure(df, current_day_index, breakpoints)
-    chart_placeholder.plotly_chart(
-        fig,
-        use_container_width=True,
-        theme=None,
-        config={"displayModeBar": False, "staticPlot": False},
-        key="price_chart"
-    )
+    chart_placeholder.plotly_chart(fig, use_container_width=True)
 
 def handle_auto_progress_live(df, breakpoints, ticker_placeholder, chart_placeholder):
     """Update only ticker and chart in-place during auto progression"""
@@ -139,9 +133,8 @@ def handle_auto_progress_live(df, breakpoints, ticker_placeholder, chart_placeho
             st.rerun()
             return
 
-        # Sleep between frames (throttle to avoid UI flicker on cloud)
+        # Sleep between frames
         sleep_interval = st.session_state.time_to_run_sec / max(1, len(df))
-        sleep_interval = max(0.05, sleep_interval)
         time.sleep(sleep_interval)
 
 def inject_custom_css():

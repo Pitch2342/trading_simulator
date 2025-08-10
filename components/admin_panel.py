@@ -171,7 +171,7 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
             with ui_col2:
                 # Time to run setting
                 new_time_to_run = st.number_input(
-                    "Simulation Duration (seconds)",
+                    "Simulation Duration (seconds) [minimum time between days will be 0.05s]",
                     min_value=1,
                     max_value=300,
                     value=st.session_state.time_to_run_sec,
@@ -278,8 +278,8 @@ def render_admin_panel(df, breakpoints, force_expanded=False):
                     st.exception(e) 
         
         # Application metadata
-        # Reminder: whenever a change goes in, update VERSION_DATE.
+        # Reminder: whenever a change goes in, update VERSION_TIME.
         APP_CREATOR = "Pitch"
-        VERSION_DATE = "2025-08-10"
+        VERSION_TIME = "2025-08-10 14:20"
         st.markdown("---")
-        st.caption(f"Creator: {APP_CREATOR} | Version date: {VERSION_DATE}")
+        st.caption(f"Creator: {APP_CREATOR} | Version date: {VERSION_TIME}")

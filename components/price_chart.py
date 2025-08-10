@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
+import pandas as pd
 from utils.data_handler import mask_future_data
 from utils.visual_configs import CURRENCY_INDICATOR, get_hoverlabel_config
 
@@ -10,16 +11,17 @@ def build_progressive_figure(df, current_day_index: int, breakpoints: list) -> g
     Returns:
         go.Figure: Configured Plotly figure for current state
     """
-    # Create masked data for future prices
+    # Create masked data for future prices and slice to reduce payload
     masked_df = mask_future_data(df, current_day_index)
+    visible_df = masked_df.iloc[: current_day_index + 1]
 
     # Create figure
     fig = go.Figure()
 
-    # Add price line
-    fig.add_trace(go.Scatter(
-        x=df['Date'],
-        y=masked_df['Price'],
+    # Add price line (use WebGL for smoother rendering on large datasets)
+    fig.add_trace(go.Scattergl(
+        x=visible_df['Date'],
+        y=visible_df['Price'],
         mode='lines',
         name='Price',
         line=dict(color='blue')
@@ -31,7 +33,7 @@ def build_progressive_figure(df, current_day_index: int, breakpoints: list) -> g
         breakpoint_dates = df.loc[past_breakpoints, 'Date']
         breakpoint_prices = df.loc[past_breakpoints, 'Price']
 
-        fig.add_trace(go.Scatter(
+        fig.add_trace(go.Scattergl(
             x=breakpoint_dates,
             y=breakpoint_prices,
             mode='markers',
@@ -43,51 +45,55 @@ def build_progressive_figure(df, current_day_index: int, breakpoints: list) -> g
             )
         ))
 
-    # Update layout with improved styling
+    # Pre-compute fixed X range (entire dataset) to keep suspense
+    x_min = df['Date'].min()
+    x_max = df['Date'].max()
+    x_range = x_max - x_min
+    # 2.5% padding on both sides; fallback to 1 day if all dates equal
+    x_pad = x_range * 0.025 if x_range.value != 0 else pd.Timedelta(days=1)
+    # Compute dynamic Y range from visible data slice
+    y_min_vis = float(visible_df['Price'].min())
+    y_max_vis = float(visible_df['Price'].max())
+    y_pad_vis = max(1e-9, (y_max_vis - y_min_vis) * 0.05)
+    dynamic_y_range = [y_min_vis - y_pad_vis, y_max_vis + y_pad_vis]
+
+    # Update layout with improved styling and stable UI between updates
     fig.update_layout(
         title='Price Movement',
         xaxis_title='Date',
         yaxis_title='Price',
         showlegend=True,
         height=600,
+        uirevision='price_chart',  # keep UI state (zoom, pan) to avoid flicker
+        transition={"duration": 0},  # disable plotly transitions
         xaxis=dict(
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.2)',
-            gridwidth=1
+            gridwidth=1,
+            autorange=False,
+            range=[x_min - x_pad, x_max + x_pad]
         ),
         yaxis=dict(
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.2)',
-            gridwidth=1
+            gridwidth=1,
+            autorange=True
         ),
         hoverlabel=get_hoverlabel_config()
     )
 
-    # Add vertical line for current day with improved styling
+    # Add a 'current day' vertical line as a trace to avoid layout shape churn
     current_date = df.iloc[current_day_index]['Date']
-    fig.add_shape(
-        type="line",
-        x0=current_date,
-        x1=current_date,
-        y0=0,
-        y1=1,
-        yref="paper",
-        line=dict(
-            color="gray",
-            width=2,
-            dash="dash"
+    fig.add_trace(
+        go.Scattergl(
+            x=[current_date, current_date],
+            y=[dynamic_y_range[0], dynamic_y_range[1]],
+            mode='lines',
+            line=dict(color='gray', width=2, dash='dash'),
+            hoverinfo='skip',
+            name='Current Day',
+            showlegend=False
         )
-    )
-
-    # Add annotation for current day
-    fig.add_annotation(
-        x=current_date,
-        y=1,
-        yref="paper",
-        text="Current Day",
-        showarrow=False,
-        yshift=10,
-        xshift=10
     )
 
     return fig
